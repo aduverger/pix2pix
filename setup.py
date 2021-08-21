@@ -7,7 +7,8 @@ requirements = [x.strip() for x in content if 'git+' not in x]
 
 setup(name='pix2pix',
       version="1.0",
-      description="Project Description",
+      description="Le Wagon project : Image-to-image translation with\
+                                        conditional adversarial nets",
       packages=find_packages(),
       install_requires=requirements,
       test_suite='tests',
