@@ -3,6 +3,7 @@
 .coverage
 .ipynb_checkpoints
 .DS_Store
+datasets/
 *.csv
 **/__pycache__/
 .env
