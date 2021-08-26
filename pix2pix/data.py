@@ -20,7 +20,6 @@ def load_data(host='drive', dataset='facades'):
         directory = '/content/drive/MyDrive/pix2pix/datasets'
         if dataset == 'facades':
             directory += '/resized'
-    #TODO don't use ../ but .os to get path
     else: #if host == 'local'
         directory = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'datasets')
         if dataset == 'facades':
@@ -30,7 +29,6 @@ def load_data(host='drive', dataset='facades'):
     data_train = []
     data_val = []
     data_test = []
-    print(directory+"/train/*.jpg")
     for im_path in glob.glob(directory+"/train/*.jpg"):
         data_train.append(imageio.core.asarray(imageio.imread(im_path)))
 
