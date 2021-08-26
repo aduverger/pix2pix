@@ -3,24 +3,22 @@ pip>=9
 setuptools>=26
 twine
 wheel>=0.29
+ipdb
 
 # data science
-numpy
-pandas
-scikit-learn
+matplotlib
+seaborn
+numpy<1.20
+pandas<1.4
+scikit-learn<0.25
 
 # tests/linter
 black
 coverage
 flake8
 pytest
+pylint
 yapf
-
-# API
-gcsfs
-google-cloud-storage
-mlflow
-s3fs
 
 # utilities
 six>=1.14
