@@ -92,22 +92,22 @@ def get_facades_datasets(host='drive', batch_size=16):
         batch_size (int): The size for the batch of the datasets. Defaults to 16.
 
     Returns:
-        X_ds_train, ..., Y_ds_test : The 6 tf.Dataset needed - (X, Y) from (train, val, test)
+        paint_ds_train, ..., real_ds_test : The 6 tf.Dataset needed - (X, Y) from (train, val, test)
     """
     
     data_train, data_val, data_test = load_data(host, dataset='facades')
     data_train, data_val, data_test = normalize_data(data_train), normalize_data(data_val), normalize_data(data_test)
-    X_train, Y_train = split_images(data_train)
-    X_val, Y_val = split_images(data_val)
-    X_test, Y_test = split_images(data_test)
+    paint_train, real_train = split_images(data_train)
+    paint_val, real_val = split_images(data_val)
+    paint_test, real_test = split_images(data_test)
     
-    X_ds_train, Y_ds_train = create_dataset(X_train, batch_size), create_dataset(Y_train, batch_size)
-    X_ds_val, Y_ds_val = create_dataset(X_val, batch_size), create_dataset(Y_val, batch_size)
-    X_ds_test, Y_ds_test = create_dataset(X_test, batch_size), create_dataset(Y_test, batch_size)
+    paint_ds_train, real_ds_train = create_dataset(paint_train, batch_size), create_dataset(real_train, batch_size)
+    paint_ds_val, real_ds_val = create_dataset(paint_val, batch_size), create_dataset(real_val, batch_size)
+    paint_ds_test, real_ds_test = create_dataset(paint_test, batch_size), create_dataset(real_test, batch_size)
     
-    return X_ds_train, X_ds_val, X_ds_test, Y_ds_train, Y_ds_val, Y_ds_test
+    return paint_ds_train, paint_ds_val, paint_ds_test, real_ds_train, real_ds_val, real_ds_test
     
 if __name__ == "__main__":
-    X_ds_train, X_ds_val, X_ds_test, Y_ds_train, Y_ds_val, Y_ds_test = get_facades_datasets(host='local')
-    print(type(X_ds_test))
-    print(Y_ds_val)
+    paint_ds_train, paint_ds_val, paint_ds_test, real_ds_train, real_ds_val, real_ds_test = get_facades_datasets(host='local')
+    print(type(paint_ds_test))
+    print(real_ds_val)
