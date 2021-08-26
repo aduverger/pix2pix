@@ -45,7 +45,7 @@ def load_data(host='drive', dataset='facades'):
     return data_train, data_val, data_test
 
 def normalize_data(data):
-    """Normalize data between -1 and 1, considering that the input data values are between 0 and 256 (RGB).
+    """Normalize data between -1 and 1, considering that the input data values are between 0 and 255 (RGB).
 
     Args:
         data (tf.Tensor): Data to normalize.
