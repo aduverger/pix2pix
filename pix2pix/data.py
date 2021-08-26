@@ -13,7 +13,7 @@ def load_data(host='drive', dataset='facades'):
         dataset (str): Dataset to load. Defaults to 'facades'.
 
     Returns:
-        data_train, data_val, data_test (tf.Tensor): The three datasets (train, val, test) as tensors.
+        data_train, data_val, data_test (tf.Tensor, dtype='float32'): The three datasets (train, val, test) as tensors with 'float32' type
     """
     
     if host == 'drive':
