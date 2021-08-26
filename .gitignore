@@ -7,3 +7,4 @@ datasets/
 *.csv
 **/__pycache__/
 .env
+.python-version
