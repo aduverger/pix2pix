@@ -64,7 +64,7 @@ def split_images(data):
         data (tf.Tensor): Data to split.
 
     Returns:
-        X, Y (tf.tensor): Data split between paint images (X) and photos images (Y).
+        X, Y (tf.tensor): Data split between left images (X) and right images (Y).
     """
     
     X = data[:, :, 256:]
