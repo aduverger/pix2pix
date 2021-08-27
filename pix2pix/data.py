@@ -122,7 +122,6 @@ def get_facades_datasets(host='drive', batch_size=16):
     """
 
     data_train, data_val, data_test = load_data(host, dataset='facades')
-    print('ok')
     data_train, data_val, data_test = normalize_data(data_train), normalize_data(data_val), normalize_data(data_test)
     paint_train, real_train = split_images(data_train)
     paint_val, real_val = split_images(data_val)
@@ -136,5 +135,5 @@ def get_facades_datasets(host='drive', batch_size=16):
 
 if __name__ == "__main__":
     paint_ds_train, paint_ds_val, paint_ds_test, real_ds_train, real_ds_val, real_ds_test = get_facades_datasets(host='local')
-    #print(type(paint_ds_test))
-    #print(real_ds_val)
+    print(type(paint_ds_test))
+    print(real_ds_val)
