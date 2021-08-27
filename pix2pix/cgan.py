@@ -68,7 +68,7 @@ class CGAN:
         ax.axis('off')
     
     
-    def generate_and_save_images(self, model, epoch, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val):
+    def generate_and_save_images(self, model, epoch, epochs, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val):
         display.clear_output(wait=True)
         #TODO: Use next_iter to avoid iterating upon the whole datasets ?
         X_train = [X for X in iter(X_ds_train)]
@@ -90,7 +90,7 @@ class CGAN:
         self.display_image(axs[0,1], Y_train[index_batch_train][index_train])
         axs[0,1].set_title(label="Ground truth")
         self.display_image(axs[0,2], prediction_train)
-        axs[0,2].set_title(label="Output")
+        axs[0,2].set_title(label=f"Epoch: {epoch:3}/{epochs:3} \n Output")
         self.display_image(axs[1,0], X_val[index_batch_val][index_val])
         axs[1,0].set_title(label="Val sample \n Input")
         self.display_image(axs[1,1], Y_val[index_batch_val][index_val])
@@ -186,14 +186,14 @@ class CGAN:
             '''
         # If generator is training alone, then we're done by saving MAE as loss + metric
         if epoch < epoch_gen:
-            display_str += f'Train set : Generator loss = {cur_gen_train_mae} ; Generator MAE = {cur_gen_train_mae}'
+            display_str += f'Train set : Generator loss = {cur_gen_train_mae:0.2f} ; Generator MAE = {cur_gen_train_mae:0.2f}'
         # If generator + discriminator are training, save and output all the trackers
         else:
-            display_str += f'\nTrain set : Generator loss = {cur_gen_train_cross} ; Generator MAE = {cur_gen_train_mae}'
-            display_str += f'\nDiscriminator loss = {cur_disc_train_cross} ; Discriminator accuracy = {cur_disc_train_acc}'
+            display_str += f'\nTrain set : Generator loss = {cur_gen_train_cross:0.2f} ; Generator MAE = {cur_gen_train_mae:0.2}'
+            display_str += f'\nDiscriminator loss = {cur_disc_train_cross:0.2f} ; Discriminator accuracy = {cur_disc_train_acc:0.2f}'
         print(display_str)
     
-    def train_generator(self, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val, epochs, history=None):
+    def fit_generator(self, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val, epochs, history=None):
         start_training = time.time()
         # INITIALIZING
         if history == None:
@@ -212,24 +212,24 @@ class CGAN:
                 self.train_generator_step(paint_batch, image_batch, gen_train_mae)
 
             # OUTPUT A RANDOM PREDICTION EVERY 5 EPOCHS
-            self.generate_and_save_images(self.generator, epoch, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val)
+            self.generate_and_save_images(self.generator, epoch, epochs, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val)
 
             # OUTPUT AND SAVE TRACKERS AT EACH EPOCH
             cur_gen_train_mae = np.round(gen_train_mae.result().numpy())
             
-            print(f'Time for epoch {epoch+1} is {round(time.time()-start)} sec')
+            print(f'Time for epoch {epoch+1} is {round(time.time()-start_epoch)} sec')
             history['epoch_index'].append(epoch+1)
             history['train']['gen_mae'].append(cur_gen_train_mae)
             history['train']['gen_loss'].append(cur_gen_train_mae)
             print(f'Train set : Gen loss = {cur_gen_train_mae} ; Gen MAE = {cur_gen_train_mae}\n')
 
         # Generate after the final epoch
-        self.generate_and_save_images(self.generator, epochs, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val)
+        self.generate_and_save_images(self.generator, epochs, epochs, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val)
 
         return history
 
 
-    def train_gan(self, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val, epochs, epoch_gen, history=None):
+    def fit_gan(self, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val, epochs, epoch_gen, history=None):
         start_training = time.time()
         # INITIALIZING
         if history == None:
@@ -260,7 +260,7 @@ class CGAN:
                     self.train_gan_step(paint_batch, image_batch, disc_train_cross, disc_train_acc, gen_train_cross, gen_train_mae)
 
             # OUTPUT A RANDOM PREDICTION EVERY 5 EPOCHS
-            self.generate_and_save_images(self.generator, epoch, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val)
+            self.generate_and_save_images(self.generator, epoch, epochs, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val)
 
             # OUTPUT AND SAVE TRACKERS AT EACH EPOCH
             cur_gen_train_mae = gen_train_mae.result().numpy()
@@ -272,7 +272,7 @@ class CGAN:
             self.display_trackers(start_training, start_epoch, epoch, epoch_gen, epochs, cur_gen_train_mae, cur_gen_train_cross, cur_disc_train_cross, cur_disc_train_acc)
 
         # Generate after the final epoch
-        self.generate_and_save_images(self.generator, epochs, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val)
+        self.generate_and_save_images(self.generator, epochs, epochs, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val)
 
         return history
 
