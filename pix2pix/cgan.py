@@ -11,10 +11,12 @@ from pix2pix.data import *
 from pix2pix.models import *
 from tensorflow.keras.optimizers import Adam
 
-
+"""
+Main class for pix2pix project. Implement a full CGAN model that can be fit.
+"""
 
 class CGAN:
-    def __init__(self, generator, discriminator):
+    def __init__(self, generator, discriminator=None):
         self.generator = generator
         self.discriminator = discriminator
         self.gen_optimizer = Adam(1e-4)
@@ -30,6 +32,15 @@ class CGAN:
     
     
     def discriminator_loss(self, real_output, fake_output):
+        """Return the discriminator loss
+
+        Args:
+            real_output (tf.Tensor): Discriminator output
+            fake_output ([type]): [description]
+
+        Returns:
+            [type]: [description]
+        """
         real_loss = self.cross_entropy(ones_like(real_output), real_output)
         fake_loss = self.cross_entropy(zeros_like(fake_output), fake_output)
         total_loss = real_loss + fake_loss
@@ -62,45 +73,6 @@ class CGAN:
     def update_generator_cross(self, cross, fake_output):
         cross.update_state(ones_like(fake_output), fake_output)
     
-    
-    def display_image(self, ax, sample_tensor):
-        ax.imshow((sample_tensor * 127.5 + 127.5).numpy().astype('uint8'))
-        ax.axis('off')
-    
-    
-    def generate_and_save_images(self, model, epoch, epochs, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val):
-        display.clear_output(wait=True)
-        #TODO: Use next_iter to avoid iterating upon the whole datasets ?
-        X_train = [X for X in iter(X_ds_train)]
-        Y_train = [Y for Y in iter(Y_ds_train)]
-        X_val = [X for X in iter(X_ds_val)]
-        Y_val = [Y for Y in iter(Y_ds_val)]
-
-        index_batch_train = random.randint(0, len(X_train) - 1)
-        index_batch_val = random.randint(0, len(X_val) - 1)
-        index_train = random.randint(0, X_train[index_batch_train].shape[0] - 1)
-        index_val = random.randint(0, X_val[index_batch_val].shape[0] - 1)
-
-        prediction_train = model(expand_dims(X_train[index_batch_train][index_train], axis=0), training=False)[0]
-        prediction_val = model(expand_dims(X_val[index_batch_val][index_val], axis=0), training=False)[0]
-
-        fig, axs = plt.subplots(2, 3, figsize=(10,7))
-        self.display_image(axs[0,0], X_train[index_batch_train][index_train])
-        axs[0,0].set_title(label="Train sample \n Input")
-        self.display_image(axs[0,1], Y_train[index_batch_train][index_train])
-        axs[0,1].set_title(label="Ground truth")
-        self.display_image(axs[0,2], prediction_train)
-        axs[0,2].set_title(label=f"Epoch: {epoch:3}/{epochs:3} \n Output")
-        self.display_image(axs[1,0], X_val[index_batch_val][index_val])
-        axs[1,0].set_title(label="Val sample \n Input")
-        self.display_image(axs[1,1], Y_val[index_batch_val][index_val])
-        axs[1,1].set_title(label="Ground truth")
-        self.display_image(axs[1,2], prediction_val)
-        axs[1,2].set_title(label="Output")
-
-        fig.savefig('image_at_epoch_{:04d}.png'.format(epoch))
-        plt.show()
-        
         
     #@function
     def train_generator_step(self, paint, real_images, gen_mae):
@@ -116,6 +88,22 @@ class CGAN:
         # Track loss and metrics (loss = mae when the generator trains alone)
         self.update_generator_mae(gen_mae, fake_images, real_images)
 
+    #@function
+    def train_discriminator_step(self, paint, real_images, disc_cross, disc_acc):
+        # Forward propagation
+        with GradientTape() as disc_tape:
+            fake_images = self.generator(paint, training=True)
+            real_output = self.discriminator(real_images, training=True)
+            fake_output = self.discriminator(fake_images, training=True)
+            disc_loss = self.discriminator_loss(real_output, fake_output)
+
+        # Compute gradients and apply to weights
+        gradients_of_discriminator = disc_tape.gradient(disc_loss, self.discriminator.trainable_variables)
+        self.disc_optimizer.apply_gradients(zip(gradients_of_discriminator, self.discriminator.trainable_variables))
+
+        # Track loss and metrics (loss = mae when the generator trains alone)
+        self.update_discriminator_tracker(disc_cross, real_output, fake_output)
+        self.update_discriminator_tracker(disc_acc, real_output, fake_output)
 
     #@function
     def train_gan_step(self, paint, real_images, disc_cross, disc_acc, gen_cross, gen_mae):
@@ -177,6 +165,45 @@ class CGAN:
             history.get('train', {}).get('disc_acc', []).append(cur_disc_train_acc)
     
     
+    def display_image(self, ax, sample_tensor):
+        ax.imshow((sample_tensor * 127.5 + 127.5).numpy().astype('uint8'))
+        ax.axis('off')
+    
+    
+    def generate_and_save_images(self, model, epoch, epochs, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val):
+        display.clear_output(wait=True)
+        #TODO: Use next_iter to avoid iterating upon the whole datasets ?
+        X_train = [X for X in iter(X_ds_train)]
+        Y_train = [Y for Y in iter(Y_ds_train)]
+        X_val = [X for X in iter(X_ds_val)]
+        Y_val = [Y for Y in iter(Y_ds_val)]
+
+        index_batch_train = random.randint(0, len(X_train) - 1)
+        index_batch_val = random.randint(0, len(X_val) - 1)
+        index_train = random.randint(0, X_train[index_batch_train].shape[0] - 1)
+        index_val = random.randint(0, X_val[index_batch_val].shape[0] - 1)
+
+        prediction_train = model(expand_dims(X_train[index_batch_train][index_train], axis=0), training=False)[0]
+        prediction_val = model(expand_dims(X_val[index_batch_val][index_val], axis=0), training=False)[0]
+
+        fig, axs = plt.subplots(2, 3, figsize=(10,7))
+        self.display_image(axs[0,0], X_train[index_batch_train][index_train])
+        axs[0,0].set_title(label="Train sample \n Input")
+        self.display_image(axs[0,1], Y_train[index_batch_train][index_train])
+        axs[0,1].set_title(label="Ground truth")
+        self.display_image(axs[0,2], prediction_train)
+        axs[0,2].set_title(label=f"Epoch: {epoch:3}/{epochs:3} \n Output")
+        self.display_image(axs[1,0], X_val[index_batch_val][index_val])
+        axs[1,0].set_title(label="Val sample \n Input")
+        self.display_image(axs[1,1], Y_val[index_batch_val][index_val])
+        axs[1,1].set_title(label="Ground truth")
+        self.display_image(axs[1,2], prediction_val)
+        axs[1,2].set_title(label="Output")
+
+        fig.savefig('image_at_epoch_{:04d}.png'.format(epoch))
+        plt.show()
+        
+        
     def display_trackers(self, start_training, start_epoch, epoch, epoch_gen, epochs, cur_gen_train_mae, cur_gen_train_cross, cur_disc_train_cross, cur_disc_train_acc):
         display_str = f'''
             Training Phase
@@ -229,7 +256,7 @@ class CGAN:
         return history
 
 
-    def fit_gan(self, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val, epochs, epoch_gen, history=None):
+    def fit_gan(self, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val, epochs, epoch_gen, epoch_disc, history=None):
         start_training = time.time()
         # INITIALIZING
         if history == None:
@@ -256,6 +283,8 @@ class CGAN:
                 if epoch < epoch_gen:
                     self.train_generator_step(paint_batch, image_batch, gen_train_mae)
                 # for epoch >= epoch_gen, train generator + discriminator
+                elif epoch < epoch_disc + epoch_gen:
+                    self.train_discriminator_step(paint_batch, image_batch, disc_train_cross, disc_train_acc)
                 else:
                     self.train_gan_step(paint_batch, image_batch, disc_train_cross, disc_train_acc, gen_train_cross, gen_train_mae)
 
