@@ -22,10 +22,12 @@ class CGAN:
         self.cross_entropy = CrossLoss(from_logits=False)
         self.l1 = L1Loss()
     
+    
+    #TODO add the possibility to add different metrics
     def compile(self, gen_optimizer, disc_optimizer, gen_metrics, disc_metrics):
         self.gen_optimizer = gen_optimizer
         self.disc_optimizer = disc_optimizer
-        
+    
     
     def discriminator_loss(self, real_output, fake_output):
         real_loss = self.cross_entropy(ones_like(real_output), real_output)
@@ -33,47 +35,49 @@ class CGAN:
         total_loss = real_loss + fake_loss
         return total_loss
     
-    def update_discriminator_tracker(self, acc, real_output, fake_output):
-        acc.update_state(ones_like(real_output), real_output)
-        acc.update_state(zeros_like(fake_output), fake_output)
+    
+    def update_discriminator_tracker(self, tracker, real_output, fake_output):
+        tracker.update_state(ones_like(real_output), real_output)
+        tracker.update_state(zeros_like(fake_output), fake_output)
         
-    def generator_loss(self, fake_images=None, real_images=None, fake_output=None, type_='both'):
-        if type_ == "GAN":
+    
+    def generator_loss(self, fake_images=None, real_images=None, fake_output=None, loss_strategy='both'):
+            #TODO with try/except
+        assert loss_strategy in ['GAN', 'L1', 'both'], "Error: invalid type of loss. Should be 'GAN', 'L1' or 'both'"
+        if loss_strategy == "GAN":
             fake_loss = self.cross_entropy(ones_like(fake_output), fake_output)
             return fake_loss
-        elif type_ == "L1":
+        elif loss_strategy == "L1":
             L1_loss = self.l1(real_images * 127.5 + 127.5, fake_images * 127.5 + 127.5)
             return L1_loss
-        elif type_ == 'both':
+        elif loss_strategy == 'both':
             fake_loss = self.cross_entropy(ones_like(fake_output), fake_output)
             L1_loss = self.l1(real_images * 127.5 + 127.5, fake_images * 127.5 + 127.5)
             return fake_loss + L1_loss
-        else:
-            print("Error: invalid type of loss. Should be 'GAN', 'L1' or 'both'")
             
     def update_generator_mae(self, mae, fake_images, real_images):
         mae.update_state(real_images * 127.5 + 127.5, fake_images * 127.5 + 127.5)
-        
+
+
     def update_generator_cross(self, cross, fake_output):
         cross.update_state(ones_like(fake_output), fake_output)
+    
     
     def display_image(self, ax, sample_tensor):
         ax.imshow((sample_tensor * 127.5 + 127.5).numpy().astype('uint8'))
         ax.axis('off')
-        
+    
+    
     def generate_and_save_images(self, model, epoch, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val):
         display.clear_output(wait=True)
-        
+        #TODO: Use next_iter to avoid iterating upon the whole datasets ?
         X_train = [X for X in iter(X_ds_train)]
         Y_train = [Y for Y in iter(Y_ds_train)]
         X_val = [X for X in iter(X_ds_val)]
         Y_val = [Y for Y in iter(Y_ds_val)]
-        
+
         index_batch_train = random.randint(0, len(X_train) - 1)
         index_batch_val = random.randint(0, len(X_val) - 1)
-        # Get a random index to sample from train et val
-        # TRAIN & VAL
-        
         index_train = random.randint(0, X_train[index_batch_train].shape[0] - 1)
         index_val = random.randint(0, X_val[index_batch_val].shape[0] - 1)
 
@@ -97,12 +101,13 @@ class CGAN:
         fig.savefig('image_at_epoch_{:04d}.png'.format(epoch))
         plt.show()
         
+        
     #@function
     def train_generator_step(self, paint, real_images, gen_mae):
         # Forward propagation
         with GradientTape() as gen_tape:
             fake_images = self.generator(paint, training=True)
-            gen_loss = self.generator_loss(fake_images=fake_images, real_images=real_images, type_='L1')
+            gen_loss = self.generator_loss(fake_images=fake_images, real_images=real_images, loss_strategy='L1')
 
         # Compute gradients and apply to weights
         gradients_of_generator = gen_tape.gradient(gen_loss, self.generator.trainable_variables)
@@ -110,6 +115,7 @@ class CGAN:
 
         # Track loss and metrics (loss = mae when the generator trains alone)
         self.update_generator_mae(gen_mae, fake_images, real_images)
+
 
     #@function
     def train_gan_step(self, paint, real_images, disc_cross, disc_acc, gen_cross, gen_mae):
@@ -119,7 +125,7 @@ class CGAN:
             real_output = self.discriminator(real_images, training=True)
             fake_output = self.discriminator(fake_images, training=True)
             disc_loss = self.discriminator_loss(real_output, fake_output)
-            gen_loss = self.generator_loss(fake_images=fake_images, real_images=real_images, fake_output=fake_output, type_='GAN')
+            gen_loss = self.generator_loss(fake_images=fake_images, real_images=real_images, fake_output=fake_output, loss_strategy='GAN')
         
         # Compute gradients and apply to weights
             # For discriminators
@@ -136,58 +142,68 @@ class CGAN:
             # For generators
         self.update_generator_cross(gen_cross, fake_output)
         self.update_generator_mae(gen_mae, fake_images, real_images)    
-            
+    
+    
+    def initialize_history(self):
+        history = {
+            'epoch_index': [],
+            'train': {
+                'gen_loss': [],
+                'disc_loss': [],
+                'gen_mae': [],
+                'disc_acc': [],
+            },
+            'val': {
+                'gen_loss': [],
+                'disc_loss': [],
+                'gen_mae': [],
+                'disc_acc': [],
+            }
+        }
+        return history
+      
+      
     def update_history(self, history, epoch, cur_gen_train_mae, cur_gen_train_cross,
                    cur_disc_train_cross, cur_disc_train_acc):
-        history['epoch_index'].append(epoch+1)
-        history['train']['gen_mae'].append(cur_gen_train_mae)
+        history.get('epoch_index', []).append(epoch+1)
+        history.get('train', {}).get('gen_mae', []).append(cur_gen_train_mae)
         # If generator is training alone, then we're done by saving MAE as loss + metric
         if epoch < 1:
-            history['train']['gen_loss'].append(cur_gen_train_mae)
+            history.get('train', {}).get('gen_loss', []).append(cur_gen_train_mae)
         else:
             #TODO: if generator's loss is L1 + crossentropy, we should add both
-            history['train']['gen_loss'].append(cur_gen_train_cross)
-            history['train']['disc_loss'].append(cur_disc_train_cross)
-            history['train']['disc_acc'].append(cur_disc_train_acc)
+            history.get('train', {}).get('gen_loss', []).append(cur_gen_train_cross)
+            history.get('train', {}).get('disc_loss', []).append(cur_disc_train_cross)
+            history.get('train', {}).get('disc_acc', []).append(cur_disc_train_acc)
     
-    def display_trackers(self, start, epoch, cur_gen_train_mae, cur_gen_train_cross, cur_disc_train_cross, cur_disc_train_acc):
-        print(f'Time for epoch {epoch+1} is {round(time.time()-start, 2)} sec')
+    
+    def display_trackers(self, start_training, start_epoch, epoch, epoch_gen, epochs, cur_gen_train_mae, cur_gen_train_cross, cur_disc_train_cross, cur_disc_train_acc):
+        display_str = f'''
+            Training Phase
+            Epoch {epoch+1:5}/{epochs:5} 
+            Elapsed time since training   {round(time.time()-start_training, 2):8}s 
+                         since last epoch {round(time.time()-start_epoch, 2):8}s
+            '''
         # If generator is training alone, then we're done by saving MAE as loss + metric
-        if epoch < 30:
-            print(f'Train set : Gen loss = {cur_gen_train_mae} ; Gen MAE = {cur_gen_train_mae}\n')
-
+        if epoch < epoch_gen:
+            display_str += f'Train set : Generator loss = {cur_gen_train_mae} ; Generator MAE = {cur_gen_train_mae}'
         # If generator + discriminator are training, save and output all the trackers
         else:
-            print(
-                f'Train set : Gen loss = {cur_gen_train_cross} ; Gen MAE = {cur_gen_train_mae} ;\n \
-                Disc loss = {cur_disc_train_cross} ; Disc acc = {cur_disc_train_acc}\n'
-                )
-            
+            display_str += f'\nTrain set : Generator loss = {cur_gen_train_cross} ; Generator MAE = {cur_gen_train_mae}'
+            display_str += f'\nDiscriminator loss = {cur_disc_train_cross} ; Discriminator accuracy = {cur_disc_train_acc}'
+        print(display_str)
+    
     def train_generator(self, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val, epochs, history=None):
+        start_training = time.time()
         # INITIALIZING
         if history == None:
-            history = {
-                'epoch_index': [],
-                'train': {
-                    'gen_loss': [],
-                    'disc_loss': [],
-                    'gen_mae': [],
-                    'disc_acc': [],
-                },
-                'val': {
-                    'gen_loss': [],
-                    'disc_loss': [],
-                    'gen_mae': [],
-                    'disc_acc': [],
-                }
-            }
+            history = self.initialize_history()
         # Define the trackers to track loss
         gen_train_mae = MeanAbsoluteError()
 
-
         # START TRAINING
         for epoch in range(epochs):
-            start = time.time()
+            start_epoch = time.time()
             # Reset trackers for loss and metrics
             gen_train_mae.reset_state()
 
@@ -196,8 +212,7 @@ class CGAN:
                 self.train_generator_step(paint_batch, image_batch, gen_train_mae)
 
             # OUTPUT A RANDOM PREDICTION EVERY 5 EPOCHS
-            if epoch % 5 == 0:
-                self.generate_and_save_images(self.generator, epoch, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val)
+            self.generate_and_save_images(self.generator, epoch, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val)
 
             # OUTPUT AND SAVE TRACKERS AT EACH EPOCH
             cur_gen_train_mae = np.round(gen_train_mae.result().numpy())
@@ -212,25 +227,13 @@ class CGAN:
         self.generate_and_save_images(self.generator, epochs, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val)
 
         return history
-    
-    def train_gan(self, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val, epochs, history=None):
+
+
+    def train_gan(self, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val, epochs, epoch_gen, history=None):
+        start_training = time.time()
         # INITIALIZING
         if history == None:
-            history = {
-                'epoch_index': [],
-                'train': {
-                    'gen_loss': [],
-                    'disc_loss': [],
-                    'gen_mae': [],
-                    'disc_acc': [],
-                },
-                'val': {
-                    'gen_loss': [],
-                    'disc_loss': [],
-                    'gen_mae': [],
-                    'disc_acc': [],
-                }
-            }
+            history = self.initialize_history()
         # Define the trackers to track loss ..
         gen_train_cross = BinaryCrossentropy()
         disc_train_cross = BinaryCrossentropy()
@@ -240,27 +243,24 @@ class CGAN:
         # Define a list of all the trackers, to ease their reset at each epoch
         tracker_list = [gen_train_cross, disc_train_cross, gen_train_mae, disc_train_acc]
 
-
         # START TRAINING
         for epoch in range(epochs):
-            start = time.time()
+            start_epoch = time.time()
             # Reset trackers for loss and metrics
             for tracker in tracker_list:
                 tracker.reset_state()
 
             # LOOP THROUGH EACH BATCH
             for paint_batch, image_batch in zip(X_ds_train, Y_ds_train):
-            # if epoch < 30, train the generator alone
-                if epoch < 5:
+            # if epoch < epoch_gen, train the generator alone
+                if epoch < epoch_gen:
                     self.train_generator_step(paint_batch, image_batch, gen_train_mae)
-                # for epoch >= 30, train generator + discriminator
+                # for epoch >= epoch_gen, train generator + discriminator
                 else:
                     self.train_gan_step(paint_batch, image_batch, disc_train_cross, disc_train_acc, gen_train_cross, gen_train_mae)
 
-
             # OUTPUT A RANDOM PREDICTION EVERY 5 EPOCHS
-            if epoch % 5 == 0:
-                self.generate_and_save_images(self.generator, epoch, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val)
+            self.generate_and_save_images(self.generator, epoch, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val)
 
             # OUTPUT AND SAVE TRACKERS AT EACH EPOCH
             cur_gen_train_mae = gen_train_mae.result().numpy()
@@ -269,13 +269,15 @@ class CGAN:
             cur_disc_train_acc = disc_train_acc.result().numpy()
 
             self.update_history(history, epoch, cur_gen_train_mae, cur_gen_train_cross, cur_disc_train_cross, cur_disc_train_acc)
-            self.display_trackers(start, epoch, cur_gen_train_mae, cur_gen_train_cross, cur_disc_train_cross, cur_disc_train_acc)
+            self.display_trackers(start_training, start_epoch, epoch, epoch_gen, epochs, cur_gen_train_mae, cur_gen_train_cross, cur_disc_train_cross, cur_disc_train_acc)
 
         # Generate after the final epoch
         self.generate_and_save_images(self.generator, epochs, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val)
 
         return history
-    
+
+
+
 if __name__ == "__main__":
     paint_ds_train, paint_ds_val, paint_ds_test, real_ds_train, real_ds_val, real_ds_test = \
                                                                     get_facades_datasets(host='local')
@@ -288,7 +290,8 @@ if __name__ == "__main__":
     generator = make_generator_autoencoder_model(encoder, decoder)
     discriminator = make_discriminator_model()
     
-    model = CGAN(generator, discriminator, gen_optimizer, disc_optimizer)
+    model = CGAN(generator, discriminator)
     
     epochs = 10
-    history = model.train_gan(paint_ds_train, real_ds_train, paint_ds_val, real_ds_val, epochs)
+    epoch_gen = 2
+    history = model.train_gan(paint_ds_train, real_ds_train, paint_ds_val, real_ds_val, epochs, epoch_gen)
