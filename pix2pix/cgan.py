@@ -52,15 +52,15 @@ class CGAN:
             fake_loss = self.cross_entropy(ones_like(fake_output), fake_output)
             return fake_loss
         elif loss_strategy == "L1":
-            L1_loss = lambda_ * self.l1(real_images, fake_images)
+            L1_loss = self.l1(real_images, fake_images)
             return L1_loss
         elif loss_strategy == 'both':
             fake_loss = self.cross_entropy(ones_like(fake_output), fake_output)
-            L1_loss = lambda_ * self.l1(real_images, fake_images)
-            return fake_loss + L1_loss
+            L1_loss = self.l1(real_images, fake_images)
+            return fake_loss + lambda_*L1_loss
             
     def update_generator_mae(self, mae, fake_images, real_images):
-        mae.update_state(real_images * 127.5 + 127.5, fake_images * 127.5 + 127.5)
+        mae.update_state(real_images, fake_images)
 
 
     def update_generator_cross(self, cross, fake_output):
@@ -114,6 +114,7 @@ class CGAN:
         self.update_generator_cross(loss_tracker_train_gen, fake_output)
         self.update_generator_mae(metric_tracker_train_gen, fake_images, real_images) 
 
+
     @function
     def train_gan_step(self, paint, real_images,
                        loss_tracker_train_gen, loss_tracker_train_disc,
@@ -125,7 +126,7 @@ class CGAN:
             fake_output = self.discriminator(fake_images, training=True)
             disc_loss = self.discriminator_loss(real_output, fake_output)
             gen_loss = self.generator_loss(fake_images=fake_images, real_images=real_images,
-                                           fake_output=fake_output, loss_strategy='GAN')
+                                           fake_output=fake_output, loss_strategy='both')
         
         # Compute gradients and apply to weights
             # For discriminators
@@ -148,13 +149,15 @@ class CGAN:
         history = {
             'epoch_index': [],
             'train': {
-                'gen_loss': [],
+                'gen_L1_loss': [],
+                'gen_gan_loss': [],
                 'disc_loss': [],
                 'gen_mae': [],
                 'disc_acc': [],
             },
             'val': {
-                'gen_loss': [],
+                'gen_L1_loss': [],
+                'gen_gan_loss': [],
                 'disc_loss': [],
                 'gen_mae': [],
                 'disc_acc': [],
@@ -163,16 +166,12 @@ class CGAN:
         return history
       
       
-    def update_history(self, history, epoch, epoch_gen, res_metric_tracker_train_gen, res_loss_tracker_train_gen,
+    def update_history(self, history, epoch, res_metric_tracker_train_gen, res_loss_tracker_train_gen,
                    res_loss_tracker_train_disc, res_metric_tracker_train_disc):
         history.get('epoch_index', []).append(epoch+1)
         history.get('train', {}).get('gen_mae', []).append(res_metric_tracker_train_gen)
-        # If generator is training alone, then its loss = mae
-        if epoch < epoch_gen:
-            history.get('train', {}).get('gen_loss', []).append(res_loss_tracker_train_gen)
-        # When the generator is not training alone, its loss = cross-entropy
-        else:
-            history.get('train', {}).get('gen_loss', []).append(res_metric_tracker_train_gen)
+        history.get('train', {}).get('gen_L1_loss', []).append(res_metric_tracker_train_gen)
+        history.get('train', {}).get('gen_gan_loss', []).append(res_loss_tracker_train_gen)
         history.get('train', {}).get('disc_loss', []).append(res_loss_tracker_train_disc)
         history.get('train', {}).get('disc_acc', []).append(res_metric_tracker_train_disc)
     
@@ -239,17 +238,17 @@ class CGAN:
         
         display_str += f'''
             Epoch {epoch+1:5}/{epochs:5} 
-            Elapsed time since training      {round(time.time()-start_training, 2):8}s 
-                                since last epoch   {round(time.time()-start_epoch, 2):8}s
+            Elapsed time since training         {round(time.time()-start_training, 2):8}s 
+                                  since last epoch   {round(time.time()-start_epoch, 2):8}s
             '''
         # If generator is training alone, its loss = mae
         if epoch < epoch_gen:
             display_str += f'''
-            Train set : Generator loss = {res_metric_tracker_train_gen:0.2f}            Generator MAE = {res_metric_tracker_train_gen:0.2f}
+            Train set : Generator L1 loss = {res_metric_tracker_train_gen:0.2f}            Generator MAE = {res_metric_tracker_train_gen:0.2f}
             '''
         else:
             display_str += f'''
-            Train set : Generator loss = {res_loss_tracker_train_gen:0.2f}            Generator MAE = {res_metric_tracker_train_gen:0.2f}
+            Train set : Generator gan loss = {res_loss_tracker_train_gen:0.2f}        Generator MAE = {res_metric_tracker_train_gen:0.2f}
                         Discriminator loss = {res_loss_tracker_train_disc:0.4f}     Discriminator accuracy = {res_metric_tracker_train_disc:0.4f}
             '''
         return display_str
