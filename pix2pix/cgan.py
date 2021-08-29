@@ -32,17 +32,10 @@ class CGAN:
     
     
     def discriminator_loss(self, real_output, fake_output):
-        """Return the discriminator loss
-
-        Args:
-            real_output (tf.Tensor): Discriminator output
-            fake_output ([type]): [description]
-
-        Returns:
-            [type]: [description]
-        """
         real_loss = self.cross_entropy(ones_like(real_output), real_output)
         fake_loss = self.cross_entropy(zeros_like(fake_output), fake_output)
+        print(f'Real loss: {real_loss}')
+        print(f'Fake loss: {fake_loss}')
         total_loss = real_loss + fake_loss
         return total_loss
     
@@ -52,18 +45,18 @@ class CGAN:
         tracker.update_state(zeros_like(fake_output), fake_output)
         
     
-    def generator_loss(self, fake_images=None, real_images=None, fake_output=None, loss_strategy='both'):
+    def generator_loss(self, fake_images=None, real_images=None, fake_output=None, lambda_=100, loss_strategy='both'):
             #TODO with try/except
         assert loss_strategy in ['GAN', 'L1', 'both'], "Error: invalid type of loss. Should be 'GAN', 'L1' or 'both'"
         if loss_strategy == "GAN":
             fake_loss = self.cross_entropy(ones_like(fake_output), fake_output)
             return fake_loss
         elif loss_strategy == "L1":
-            L1_loss = self.l1(real_images * 127.5 + 127.5, fake_images * 127.5 + 127.5)
+            L1_loss = lambda_ * self.l1(real_images, fake_images)
             return L1_loss
         elif loss_strategy == 'both':
             fake_loss = self.cross_entropy(ones_like(fake_output), fake_output)
-            L1_loss = self.l1(real_images * 127.5 + 127.5, fake_images * 127.5 + 127.5)
+            L1_loss = lambda_ * self.l1(real_images, fake_images)
             return fake_loss + L1_loss
             
     def update_generator_mae(self, mae, fake_images, real_images):
@@ -75,7 +68,9 @@ class CGAN:
     
         
     @function
-    def train_generator_step(self, paint, real_images, loss_tracker_train_gen, loss_tracker_train_disc, metric_tracker_train_gen, metric_tracker_train_disc):
+    def train_generator_step(self, paint, real_images,
+                             loss_tracker_train_gen, loss_tracker_train_disc,
+                             metric_tracker_train_gen, metric_tracker_train_disc):
         # Forward propagation
         with GradientTape() as gen_tape:
             fake_images = self.generator(paint, training=True)
@@ -97,7 +92,9 @@ class CGAN:
 
 
     @function
-    def train_discriminator_step(self, paint, real_images, loss_tracker_train_gen, loss_tracker_train_disc, metric_tracker_train_gen, metric_tracker_train_disc):
+    def train_discriminator_step(self, paint, real_images,
+                                 loss_tracker_train_gen, loss_tracker_train_disc,
+                                 metric_tracker_train_gen, metric_tracker_train_disc):
         # Forward propagation
         with GradientTape() as disc_tape:
             fake_images = self.generator(paint, training=True)
@@ -118,14 +115,17 @@ class CGAN:
         self.update_generator_mae(metric_tracker_train_gen, fake_images, real_images) 
 
     @function
-    def train_gan_step(self, paint, real_images, loss_tracker_train_gen, loss_tracker_train_disc, metric_tracker_train_gen, metric_tracker_train_disc):
+    def train_gan_step(self, paint, real_images,
+                       loss_tracker_train_gen, loss_tracker_train_disc,
+                       metric_tracker_train_gen, metric_tracker_train_disc):
         # Forward propagation
         with GradientTape() as gen_tape, GradientTape() as disc_tape:
             fake_images = self.generator(paint, training=True)
             real_output = self.discriminator(real_images, training=True)
             fake_output = self.discriminator(fake_images, training=True)
             disc_loss = self.discriminator_loss(real_output, fake_output)
-            gen_loss = self.generator_loss(fake_images=fake_images, real_images=real_images, fake_output=fake_output, loss_strategy='GAN')
+            gen_loss = self.generator_loss(fake_images=fake_images, real_images=real_images,
+                                           fake_output=fake_output, loss_strategy='GAN')
         
         # Compute gradients and apply to weights
             # For discriminators
@@ -163,11 +163,16 @@ class CGAN:
         return history
       
       
-    def update_history(self, history, epoch, res_metric_tracker_train_gen, res_loss_tracker_train_gen,
+    def update_history(self, history, epoch, epoch_gen, res_metric_tracker_train_gen, res_loss_tracker_train_gen,
                    res_loss_tracker_train_disc, res_metric_tracker_train_disc):
         history.get('epoch_index', []).append(epoch+1)
         history.get('train', {}).get('gen_mae', []).append(res_metric_tracker_train_gen)
-        history.get('train', {}).get('gen_loss', []).append(res_loss_tracker_train_gen)
+        # If generator is training alone, then its loss = mae
+        if epoch < epoch_gen:
+            history.get('train', {}).get('gen_loss', []).append(res_loss_tracker_train_gen)
+        # When the generator is not training alone, its loss = cross-entropy
+        else:
+            history.get('train', {}).get('gen_loss', []).append(res_metric_tracker_train_gen)
         history.get('train', {}).get('disc_loss', []).append(res_loss_tracker_train_disc)
         history.get('train', {}).get('disc_acc', []).append(res_metric_tracker_train_disc)
     
@@ -223,7 +228,8 @@ class CGAN:
         
         
     def display_trackers(self, start_training, start_epoch, epoch, epoch_gen, epoch_disc, epochs,
-                         res_metric_tracker_train_gen, res_loss_tracker_train_gen, res_loss_tracker_train_disc, res_metric_tracker_train_disc):
+                         res_metric_tracker_train_gen, res_loss_tracker_train_gen,
+                         res_loss_tracker_train_disc, res_metric_tracker_train_disc):
         if epoch < epoch_gen:
             display_str = f"\nTraining Phase : Generator leveling up ({epoch+1}/{epoch_gen})\n"
         elif epoch < epoch_gen + epoch_disc:
@@ -233,20 +239,18 @@ class CGAN:
         
         display_str += f'''
             Epoch {epoch+1:5}/{epochs:5} 
-            Elapsed time since training   {round(time.time()-start_training, 2):8}s 
-                            since last epoch   {round(time.time()-start_epoch, 2):8}s
+            Elapsed time since training      {round(time.time()-start_training, 2):8}s 
+                                since last epoch   {round(time.time()-start_epoch, 2):8}s
             '''
-        # If generator is training alone, then we're done by saving MAE as loss + metric
+        # If generator is training alone, its loss = mae
         if epoch < epoch_gen:
-            display_str += f'''
-            Train set : Generator loss = {res_loss_tracker_train_gen:0.2f}            Generator MAE = {res_metric_tracker_train_gen:0.2f}
-            '''
-        else:
             display_str += f'''
             Train set : Generator loss = {res_metric_tracker_train_gen:0.2f}            Generator MAE = {res_metric_tracker_train_gen:0.2f}
             '''
+        else:
             display_str += f'''
-                        Discriminator loss = {res_loss_tracker_train_disc:0.4f}     Discriminator accuracy = {res_metric_tracker_train_disc:0.2f}
+            Train set : Generator loss = {res_loss_tracker_train_gen:0.2f}            Generator MAE = {res_metric_tracker_train_gen:0.2f}
+                        Discriminator loss = {res_loss_tracker_train_disc:0.4f}     Discriminator accuracy = {res_metric_tracker_train_disc:0.4f}
             '''
         return display_str
     
@@ -263,7 +267,8 @@ class CGAN:
         metric_tracker_train_gen = MeanAbsoluteError()
         metric_tracker_train_disc = Accuracy()
         # Define a list of all the trackers, to ease their reset at each epoch
-        tracker_list = [loss_tracker_train_gen, loss_tracker_train_disc, metric_tracker_train_gen, metric_tracker_train_disc]
+        tracker_list = [loss_tracker_train_gen, loss_tracker_train_disc,
+                        metric_tracker_train_gen, metric_tracker_train_disc]
 
         # START TRAINING
         for epoch in range(epochs):
