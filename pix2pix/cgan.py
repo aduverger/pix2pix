@@ -186,7 +186,7 @@ class CGAN:
         prediction_train = model(expand_dims(X_train[index_batch_train][index_train], axis=0), training=False)[0]
         prediction_val = model(expand_dims(X_val[index_batch_val][index_val], axis=0), training=False)[0]
 
-        fig = plt.figure(constrained_layout=True, figsize=(6,6))
+        fig = plt.figure(constrained_layout=True, figsize=(10,8))
         gs = fig.add_gridspec(3, 3)
         ax1 = fig.add_subplot(gs[0, 0])
         ax2 = fig.add_subplot(gs[0, 1])
