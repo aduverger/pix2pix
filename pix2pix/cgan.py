@@ -237,43 +237,8 @@ class CGAN:
             '''
         return display_str
     
-    def fit_generator(self, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val, epochs, history=None):
-        start_training = time.time()
-        # INITIALIZING
-        if history == None:
-            history = self.initialize_history()
-        # Define the trackers to track loss
-        gen_train_mae = MeanAbsoluteError()
 
-        # START TRAINING
-        for epoch in range(epochs):
-            start_epoch = time.time()
-            # Reset trackers for loss and metrics
-            gen_train_mae.reset_state()
-
-            # LOOP THROUGH EACH BATCH
-            for paint_batch, image_batch in zip(X_ds_train, Y_ds_train):
-                self.train_generator_step(paint_batch, image_batch, gen_train_mae)
-
-            # OUTPUT A RANDOM PREDICTION EVERY 5 EPOCHS
-            self.generate_and_save_images(self.generator, epoch, epochs, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val)
-
-            # OUTPUT AND SAVE TRACKERS AT EACH EPOCH
-            cur_gen_train_mae = np.round(gen_train_mae.result().numpy())
-            
-            print(f'Time for epoch {epoch+1} is {round(time.time()-start_epoch)} sec')
-            history['epoch_index'].append(epoch+1)
-            history['train']['gen_mae'].append(cur_gen_train_mae)
-            history['train']['gen_loss'].append(cur_gen_train_mae)
-            print(f'Train set : Gen loss = {cur_gen_train_mae} ; Gen MAE = {cur_gen_train_mae}\n')
-
-        # Generate after the final epoch
-        self.generate_and_save_images(self.generator, epochs, epochs, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val)
-
-        return history
-
-
-    def fit_gan(self, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val, epochs, epoch_gen, epoch_disc, history=None):
+    def fit(self, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val, epochs, epoch_gen, epoch_disc, history=None):
         start_training = time.time()
         # INITIALIZING
         if history == None:
@@ -338,4 +303,4 @@ if __name__ == "__main__":
     epochs = 10
     epoch_gen = 2
     epoch_disc = 2
-    history = model.fit_gan(paint_ds_train, real_ds_train, paint_ds_val, real_ds_val, epochs, epoch_gen, epoch_disc)
+    history = model.fit(paint_ds_train, real_ds_train, paint_ds_val, real_ds_val, epochs, epoch_gen, epoch_disc)
