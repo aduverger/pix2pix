@@ -323,4 +323,5 @@ if __name__ == "__main__":
     
     epochs = 10
     epoch_gen = 2
-    history = model.train_gan(paint_ds_train, real_ds_train, paint_ds_val, real_ds_val, epochs, epoch_gen)
+    epoch_disc = 2
+    history = model.fit_gan(paint_ds_train, real_ds_train, paint_ds_val, real_ds_val, epochs, epoch_gen, epoch_disc)
