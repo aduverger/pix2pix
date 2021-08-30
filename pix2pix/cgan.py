@@ -270,7 +270,7 @@ class CGAN:
         prediction_train = model(expand_dims(X_train[index_batch_train][index_train], axis=0), training=False)[0]
         prediction_val = model(expand_dims(X_val[index_batch_val][index_val], axis=0), training=False)[0]
 
-        fig = plt.figure(constrained_layout=True, figsize=(10,8))
+        fig = plt.figure(constrained_layout=True, figsize=(9,6))
         gs = fig.add_gridspec(3, 3)
         ax1 = fig.add_subplot(gs[0, 0])
         ax2 = fig.add_subplot(gs[0, 1])
@@ -292,9 +292,8 @@ class CGAN:
         ax5.set_title(label="Ground truth")
         self.display_image(ax6, prediction_val)
         ax6.set_title(label="Output")
-        ax7.text(0, 1, trackers_to_display, ha='left')
+        ax7.text(0, 1, trackers_to_display, ha='left', size='medium')
         ax7.axis('off')
-
         fig.savefig('image_at_epoch_{:04d}.png'.format(epoch))
         plt.show()
 
@@ -323,10 +322,10 @@ class CGAN:
         else:
             display_str += f'''
             Train set : Generator GAN loss = {res_trackers_dict['loss_tracker_train_gen']:0.2f}        Generator MAE = {res_trackers_dict['metric_tracker_train_gen']:0.2f}
-                            Discriminator loss = {res_trackers_dict['loss_tracker_train_disc']:0.4f}     Discriminator accuracy = {res_trackers_dict['metric_tracker_train_disc']:0.4f}
+                            Discriminator loss = {res_trackers_dict['loss_tracker_train_disc']:0.2f}     Discriminator accuracy = {res_trackers_dict['metric_tracker_train_disc']:0.2f}
             
             Val set :   Generator GAN loss = {res_trackers_dict['loss_tracker_val_gen']:0.2f}        Generator MAE = {res_trackers_dict['metric_tracker_val_gen']:0.2f}
-                            Discriminator loss = {res_trackers_dict['loss_tracker_val_disc']:0.4f}     Discriminator accuracy = {res_trackers_dict['metric_tracker_val_disc']:0.4f}
+                            Discriminator loss = {res_trackers_dict['loss_tracker_val_disc']:0.2f}     Discriminator accuracy = {res_trackers_dict['metric_tracker_val_disc']:0.2f}
             '''
         return display_str
     
