@@ -25,6 +25,7 @@ class CGAN:
         self.disc_optimizer = Adam(1e-4)
         self.cross_entropy = CrossLoss(from_logits=False)
         self.l1 = L1Loss()
+        self.disc_threshold = 0.5
     
     
     #TODO add the possibility to add different metrics
@@ -45,9 +46,9 @@ class CGAN:
         loss.update_state(zeros_like(fake_output), fake_output)
 
 
-    def update_discriminator_accuracy(self, acc, real_output, fake_output, threshold=0.5):
-        real_proba = [0 if x <= threshold else 1 for x in real_output]
-        fake_proba = [0 if x <= threshold else 1 for x in fake_output]
+    def update_discriminator_accuracy(self, acc, real_output, fake_output):
+        real_proba = [0 if x <= self.disc_threshold else 1 for x in real_output]
+        fake_proba = [0 if x <= self.disc_threshold else 1 for x in fake_output]
         acc.update_state(ones_like(real_output), np.array(real_proba))
         acc.update_state(zeros_like(fake_output), np.array(fake_proba))
     
