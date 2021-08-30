@@ -254,8 +254,8 @@ class CGAN:
 
     def fit(self, X_ds_train=None, Y_ds_train=None,
             X_ds_val=None, Y_ds_val=None,
-            epochs=None, epoch_gen=None, epoch_disc=None,
-            lambda_l1=None, history=None):
+            epochs=0, epoch_gen=0, epoch_disc=0,
+            lambda_l1=0, history=None):
         
         start_training = time.time()
         # INITIALIZING
