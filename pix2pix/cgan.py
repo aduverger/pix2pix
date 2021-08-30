@@ -34,8 +34,6 @@ class CGAN:
     def discriminator_loss(self, real_output, fake_output):
         real_loss = self.cross_entropy(ones_like(real_output), real_output)
         fake_loss = self.cross_entropy(zeros_like(fake_output), fake_output)
-        print(f'Real loss: {real_loss}')
-        print(f'Fake loss: {fake_loss}')
         total_loss = real_loss + fake_loss
         return total_loss
     
@@ -45,7 +43,7 @@ class CGAN:
         tracker.update_state(zeros_like(fake_output), fake_output)
         
     
-    def generator_loss(self, fake_images=None, real_images=None, fake_output=None, lambda_=100, loss_strategy='both'):
+    def generator_loss(self, fake_images=None, real_images=None, fake_output=None, lambda_l1=100, loss_strategy='both'):
             #TODO with try/except
         assert loss_strategy in ['GAN', 'L1', 'both'], "Error: invalid type of loss. Should be 'GAN', 'L1' or 'both'"
         if loss_strategy == "GAN":
@@ -57,7 +55,7 @@ class CGAN:
         elif loss_strategy == 'both':
             fake_loss = self.cross_entropy(ones_like(fake_output), fake_output)
             L1_loss = self.l1(real_images, fake_images)
-            return fake_loss + lambda_*L1_loss
+            return fake_loss + lambda_l1*L1_loss
             
     def update_generator_mae(self, mae, fake_images, real_images):
         mae.update_state(real_images, fake_images)
@@ -70,13 +68,15 @@ class CGAN:
     @function
     def train_generator_step(self, paint, real_images,
                              loss_tracker_train_gen, loss_tracker_train_disc,
-                             metric_tracker_train_gen, metric_tracker_train_disc):
+                             metric_tracker_train_gen, metric_tracker_train_disc,
+                             lambda_l1):
         # Forward propagation
         with GradientTape() as gen_tape:
             fake_images = self.generator(paint, training=True)
             real_output = self.discriminator(real_images, training=True)
             fake_output = self.discriminator(fake_images, training=True)
-            gen_loss = self.generator_loss(fake_images=fake_images, real_images=real_images, loss_strategy='L1')
+            gen_loss = self.generator_loss(fake_images=fake_images, real_images=real_images,
+                                           lambda_l1=lambda_l1, loss_strategy='L1')
 
         # Compute gradients and apply to weights
         gradients_of_generator = gen_tape.gradient(gen_loss, self.generator.trainable_variables)
@@ -118,7 +118,8 @@ class CGAN:
     @function
     def train_gan_step(self, paint, real_images,
                        loss_tracker_train_gen, loss_tracker_train_disc,
-                       metric_tracker_train_gen, metric_tracker_train_disc):
+                       metric_tracker_train_gen, metric_tracker_train_disc,
+                       lambda_l1):
         # Forward propagation
         with GradientTape() as gen_tape, GradientTape() as disc_tape:
             fake_images = self.generator(paint, training=True)
@@ -126,7 +127,7 @@ class CGAN:
             fake_output = self.discriminator(fake_images, training=True)
             disc_loss = self.discriminator_loss(real_output, fake_output)
             gen_loss = self.generator_loss(fake_images=fake_images, real_images=real_images,
-                                           fake_output=fake_output, loss_strategy='both')
+                                           fake_output=fake_output, lambda_l1=lambda_l1, loss_strategy='both')
         
         # Compute gradients and apply to weights
             # For discriminators
@@ -149,15 +150,13 @@ class CGAN:
         history = {
             'epoch_index': [],
             'train': {
-                'gen_L1_loss': [],
-                'gen_gan_loss': [],
+                'gen_loss': [],
                 'disc_loss': [],
                 'gen_mae': [],
                 'disc_acc': [],
             },
             'val': {
-                'gen_L1_loss': [],
-                'gen_gan_loss': [],
+                'gen_loss': [],
                 'disc_loss': [],
                 'gen_mae': [],
                 'disc_acc': [],
@@ -170,8 +169,7 @@ class CGAN:
                    res_loss_tracker_train_disc, res_metric_tracker_train_disc):
         history.get('epoch_index', []).append(epoch+1)
         history.get('train', {}).get('gen_mae', []).append(res_metric_tracker_train_gen)
-        history.get('train', {}).get('gen_L1_loss', []).append(res_metric_tracker_train_gen)
-        history.get('train', {}).get('gen_gan_loss', []).append(res_loss_tracker_train_gen)
+        history.get('train', {}).get('gen_loss', []).append(res_loss_tracker_train_gen)
         history.get('train', {}).get('disc_loss', []).append(res_loss_tracker_train_disc)
         history.get('train', {}).get('disc_acc', []).append(res_metric_tracker_train_disc)
     
@@ -249,12 +247,16 @@ class CGAN:
         else:
             display_str += f'''
             Train set : Generator gan loss = {res_loss_tracker_train_gen:0.2f}        Generator MAE = {res_metric_tracker_train_gen:0.2f}
-                        Discriminator loss = {res_loss_tracker_train_disc:0.4f}     Discriminator accuracy = {res_metric_tracker_train_disc:0.4f}
+                            Discriminator loss = {res_loss_tracker_train_disc:0.4f}     Discriminator accuracy = {res_metric_tracker_train_disc:0.4f}
             '''
         return display_str
     
 
-    def fit(self, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val, epochs, epoch_gen, epoch_disc, history=None):
+    def fit(self, X_ds_train=None, Y_ds_train=None,
+            X_ds_val=None, Y_ds_val=None,
+            epochs=None, epoch_gen=None, epoch_disc=None,
+            lambda_l1=None, history=None):
+        
         start_training = time.time()
         # INITIALIZING
         if history == None:
@@ -283,7 +285,8 @@ class CGAN:
                     self.train_generator_step(
                         paint_batch, image_batch,
                         loss_tracker_train_gen, loss_tracker_train_disc,
-                        metric_tracker_train_gen, metric_tracker_train_disc
+                        metric_tracker_train_gen, metric_tracker_train_disc,
+                        lambda_l1
                         )
                 # for epoch >= epoch_gen, train generator + discriminator
                 elif epoch < epoch_disc + epoch_gen:
@@ -296,7 +299,8 @@ class CGAN:
                     self.train_gan_step(
                         paint_batch, image_batch,
                         loss_tracker_train_gen, loss_tracker_train_disc,
-                        metric_tracker_train_gen, metric_tracker_train_disc
+                        metric_tracker_train_gen, metric_tracker_train_disc,
+                        lambda_l1
                         )
 
             # OUTPUT AND SAVE IMAGES+TRACKERS AT EACH EPOCH
