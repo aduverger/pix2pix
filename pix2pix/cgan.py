@@ -303,19 +303,20 @@ class CGAN:
         if epoch < epoch_gen:
             display_str = f"\n Training Phase : Generator leveling up ({epoch+1}/{epoch_gen})\n"
         elif epoch < epoch_gen + epoch_disc:
-            display_str = f"\n Training Phase : Discriminator leveling up ({epoch+1}/{epoch_gen+epoch_disc})\n"
+            display_str = f"\n Training Phase : Discriminator leveling up ({epoch+1-epoch_gen}/{epoch_disc})\n"
         else:
             display_str = f"\n Training Phase : GAN leveling up\n"
         
         display_str += f'''
             Epoch {epoch+1:3}/{epochs:3} 
             Elapsed time since training         {round(time.time()-start_training, 2):8}s 
-                                 since last epoch     {round(time.time()-start_epoch, 2):8}s
+                                  since last epoch    {round(time.time()-start_epoch, 2):8}s
             '''
         # If generator is training alone, its loss = mae
         if epoch < epoch_gen:
             display_str += f'''
             Train set : Generator L1 loss = {res_trackers_dict['metric_tracker_train_gen']:0.2f}            Generator MAE = {res_trackers_dict['metric_tracker_train_gen']:0.2f}
+            
             Val set    : Generator L1 loss = {res_trackers_dict['metric_tracker_val_gen']:0.2f}            Generator MAE = {res_trackers_dict['metric_tracker_val_gen']:0.2f}
     
             '''
