@@ -249,19 +249,24 @@ class CGAN:
         ax.axis('off')
     
     
-    def generate_and_save_images(self, model, epoch, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val, trackers_to_display):
-        #TODO RANDOM SEED
+    def generate_and_save_images(self, model, epoch, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val, trackers_to_display, random=False):
         display.clear_output(wait=True)
         #TODO: Use next_iter to avoid iterating upon the whole datasets ?
         X_train = [X for X in iter(X_ds_train)]
         Y_train = [Y for Y in iter(Y_ds_train)]
         X_val = [X for X in iter(X_ds_val)]
         Y_val = [Y for Y in iter(Y_ds_val)]
-
-        index_batch_train = random.randint(0, len(X_train) - 1)
-        index_batch_val = random.randint(0, len(X_val) - 1)
-        index_train = random.randint(0, X_train[index_batch_train].shape[0] - 1)
-        index_val = random.randint(0, X_val[index_batch_val].shape[0] - 1)
+        
+        if random == False :
+            index_batch_train = random.randint(0, len(X_train) - 1)
+            index_batch_val = random.randint(0, len(X_val) - 1)
+            index_train = random.randint(0, X_train[index_batch_train].shape[0] - 1)
+            index_val = random.randint(0, X_val[index_batch_val].shape[0] - 1)
+        else:
+            index_batch_train = 0
+            index_batch_val = 0
+            index_train = 0
+            index_val = 0
 
         prediction_train = model(expand_dims(X_train[index_batch_train][index_train], axis=0), training=False)[0]
         prediction_val = model(expand_dims(X_val[index_batch_val][index_val], axis=0), training=False)[0]
