@@ -46,9 +46,8 @@ class CGAN:
 
     def update_discriminator_accuracy(self, acc, real_output, fake_output, threshold=0.5):
         pass
-        
-        real_proba = [0 if x <= threshold else 1 for x in real_output]
-        fake_proba = [0 if x <= threshold else 1 for x in fake_output]
+        real_proba = [0 if x <= threshold else 1 for x in iter(real_output)]
+        fake_proba = [0 if x <= threshold else 1 for x in iter(fake_output)]
         acc.update_state(ones_like(real_output), real_proba)
         acc.update_state(zeros_like(fake_output), fake_proba)
     
