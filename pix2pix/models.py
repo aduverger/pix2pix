@@ -1,4 +1,6 @@
-from tensorflow.keras import layers, Sequential, Model
+from tensorflow.keras import layers, Sequential, Model, optimizers, models, Input
+
+
 
 def make_generator_encoder_model(latent_dim):
     encoder = Sequential()
@@ -112,32 +114,110 @@ def make_generator_autoencoder_model(encoder, decoder):
     return autoencoder
 
 def make_discriminator_model():
-  discriminator = Sequential()
-  discriminator.add(layers.Conv2D(64, (5,5), strides=(1,1), input_shape=(256, 256,3), padding='same'))
-  discriminator.add(layers.LeakyReLU())
+    discriminator = Sequential()
+    discriminator.add(layers.Conv2D(64, (5,5), strides=(1,1), input_shape=(256, 256,3), padding='same'))
+    discriminator.add(layers.LeakyReLU())
 
-  discriminator.add(layers.Conv2D(128, (5,5), strides=(2,2), padding='same'))
-  discriminator.add(layers.BatchNormalization())
-  discriminator.add(layers.LeakyReLU())
+    discriminator.add(layers.Conv2D(128, (5,5), strides=(2,2), padding='same'))
+    discriminator.add(layers.BatchNormalization())
+    discriminator.add(layers.LeakyReLU())
 
-  discriminator.add(layers.Conv2D(256, (5,5), strides=(2,2), padding='same'))
-  discriminator.add(layers.BatchNormalization())
-  discriminator.add(layers.LeakyReLU())
+    discriminator.add(layers.Conv2D(256, (5,5), strides=(2,2), padding='same'))
+    discriminator.add(layers.BatchNormalization())
+    discriminator.add(layers.LeakyReLU())
 
-  discriminator.add(layers.Conv2D(512, (5,5), strides=(2,2), padding='same'))
-  discriminator.add(layers.BatchNormalization())
-  discriminator.add(layers.LeakyReLU())
+    discriminator.add(layers.Conv2D(512, (5,5), strides=(2,2), padding='same'))
+    discriminator.add(layers.BatchNormalization())
+    discriminator.add(layers.LeakyReLU())
 
-  discriminator.add(layers.Conv2D(512, (5,5), strides=(2,2), padding='same'))
-  discriminator.add(layers.BatchNormalization())
-  discriminator.add(layers.LeakyReLU())
+    discriminator.add(layers.Conv2D(512, (5,5), strides=(2,2), padding='same'))
+    discriminator.add(layers.BatchNormalization())
+    discriminator.add(layers.LeakyReLU())
 
-  discriminator.add(layers.Conv2D(512, (4,4), strides=(2,2), padding='same'))
-  discriminator.add(layers.BatchNormalization())
-  discriminator.add(layers.LeakyReLU())
+    discriminator.add(layers.Conv2D(512, (4,4), strides=(2,2), padding='same'))
+    discriminator.add(layers.BatchNormalization())
+    discriminator.add(layers.LeakyReLU())
 
-  discriminator.add(layers.Flatten())
+    discriminator.add(layers.Flatten())
 
-  discriminator.add(layers.Dense(1, activation='sigmoid'))
+    discriminator.add(layers.Dense(1, activation='sigmoid'))
 
-  return discriminator
+    return discriminator
+
+
+def block_1_conv2D(filters, kernel_size, stride, activation='relu'):
+    '''
+        Return a block of layers consisting of a Conv2D-BatchNormal-LeakyRELu layer with
+        convolution applying stride
+    '''
+    block = Sequential([
+        layers.Conv2D(filters,
+                      kernel_size,
+                      strides=stride,
+                      padding="same",
+                      use_bias=True),
+        layers.BatchNormalization(),
+        layers.LeakyReLU(alpha=0.2),
+        layers.Dropout(0.1)
+    ])
+
+    return block
+
+
+def block_1_conv2D_transpose(filters,
+                             kernel_size,
+                             stride,
+                             dropout=0.3,
+                             activation='relu'):
+    '''
+        Return a block of layers consisting of a Conv2D-BatchNormal-LeakyRELu layer with
+        convolution applying stride
+    '''
+    block = Sequential([
+        layers.Conv2DTranspose(filters,
+                               kernel_size,
+                               strides=stride,
+                               padding="same",
+                               use_bias=True),
+        layers.BatchNormalization(),
+        #layers.Dropout(dropout),
+        layers.Activation(activation=activation)
+    ])
+
+    return block
+
+
+def make_dummy_generator():
+    inputs = Input(shape=(256, 256, 3))
+
+    # Entry block
+    x = block_1_conv2D(64, 4, 1)(inputs)
+    x = block_1_conv2D_transpose(64, 4, 1, activation='relu')(x)
+
+    # Last ouput
+    outputs = layers.Conv2DTranspose(3, 5, activation="tanh", padding="same")(x)
+
+    # Define the model
+    model = Model(inputs, outputs)
+    return model
+
+
+def make_dummy_discriminator():
+    model = Sequential()
+
+    model.add(layers.Input(shape=(256, 256, 3)))
+
+    model.add(
+        layers.Conv2D(64,
+                      kernel_size=(5, 5),
+                      strides=(4, 4),
+                      padding='valid',
+                      use_bias=False,
+                      input_shape=(256, 256, 3)))
+    model.add(layers.BatchNormalization())
+    model.add(layers.LeakyReLU())
+
+    model.add(layers.Flatten())
+
+    model.add(layers.Dense(1))
+    return model

@@ -3,8 +3,8 @@ import glob
 import imageio
 import numpy as np
 from tensorflow import convert_to_tensor
-from tensorflow.data import Dataset
-from tensorflow import data, io, image, stack, cast, shape, float32, random
+from tensorflow import data, io, image, stack, cast, shape, float32
+import tensorflow.random as tf_random
 
 def load_data(host='drive', dataset='facades'):
     """Return three tensors of datas (train, val, test), given a certain dataset name (e.g. 'facades).
@@ -109,7 +109,7 @@ def create_dataset(X, batch_size=16) :
         X_ds (tf.Dataset)
     """
 
-    return Dataset.from_tensor_slices(X).batch(batch_size)
+    return data.Dataset.from_tensor_slices(X).batch(batch_size)
 
 def get_facades_datasets(host='drive', batch_size=16):
     """Complete function to get the datasets you need for training a pix2pix model on the facades dataset
@@ -173,8 +173,6 @@ def get_dataset(host='drive', dataset='facades', batch_size=16):
         if dataset == 'facades':
             directory += '/facades'
 
-    print(directory)
-
     train_dataset = data.Dataset.list_files(directory + "/train/*.jpg")
     train_dataset = train_dataset.map(load_and_split_image,
                                       num_parallel_calls=data.AUTOTUNE)
@@ -222,7 +220,7 @@ def random_jitter(input_image, real_image):
     # Random cropping back to 256x256
     input_image, real_image = random_crop(input_image, real_image)
 
-    if random.uniform(()) > 0.5:
+    if tf_random.uniform(()) > 0.5:
         # Random mirroring
         input_image = image.flip_left_right(input_image)
         real_image = image.flip_left_right(real_image)
