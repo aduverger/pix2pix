@@ -16,13 +16,17 @@ Main class for pix2pix project. Implement a full CGAN model that can be fit.
 """
 
 class CGAN:
-    def __init__(self, generator, discriminator=None):
+    def __init__(self, generator, discriminator=None, history=None):
         self.generator = generator
         self.discriminator = discriminator
         self.gen_optimizer = Adam(1e-4)
         self.disc_optimizer = Adam(1e-4)
         self.cross_entropy = CrossLoss(from_logits=False)
         self.l1 = L1Loss()
+        if history == None:
+            self.initialize_history()
+        else:
+            self.history = history
     
     
     #TODO add the possibility to add different metrics
@@ -149,6 +153,8 @@ class CGAN:
     def initialize_history(self):
         history = {
             'epoch_index': [],
+            'time_epoch': [],
+            'time_cumulative': [],
             'train': {
                 'gen_loss': [],
                 'disc_loss': [],
@@ -162,16 +168,18 @@ class CGAN:
                 'disc_acc': [],
             }
         }
-        return history
+        self.history = history
       
       
-    def update_history(self, history, epoch, res_metric_tracker_train_gen, res_loss_tracker_train_gen,
+    def update_history(self, start_training, start_epoch, epoch, res_metric_tracker_train_gen, res_loss_tracker_train_gen,
                    res_loss_tracker_train_disc, res_metric_tracker_train_disc):
-        history.get('epoch_index', []).append(epoch+1)
-        history.get('train', {}).get('gen_mae', []).append(res_metric_tracker_train_gen)
-        history.get('train', {}).get('gen_loss', []).append(res_loss_tracker_train_gen)
-        history.get('train', {}).get('disc_loss', []).append(res_loss_tracker_train_disc)
-        history.get('train', {}).get('disc_acc', []).append(res_metric_tracker_train_disc)
+        self.history.get('epoch_index', []).append(epoch+1)
+        self.history.get('time_epoch', []).append(time.time()-start_epoch)
+        self.history.get('time_cumulative', []).append(time.time()-start_training)
+        self.history.get('train', {}).get('gen_mae', []).append(res_metric_tracker_train_gen)
+        self.history.get('train', {}).get('gen_loss', []).append(res_loss_tracker_train_gen)
+        self.history.get('train', {}).get('disc_loss', []).append(res_loss_tracker_train_disc)
+        self.history.get('train', {}).get('disc_acc', []).append(res_metric_tracker_train_disc)
     
     
     def display_image(self, ax, sample_tensor):
@@ -228,16 +236,16 @@ class CGAN:
                          res_metric_tracker_train_gen, res_loss_tracker_train_gen,
                          res_loss_tracker_train_disc, res_metric_tracker_train_disc):
         if epoch < epoch_gen:
-            display_str = f"\nTraining Phase : Generator leveling up ({epoch+1}/{epoch_gen})\n"
+            display_str = f"\n Training Phase : Generator leveling up ({epoch+1}/{epoch_gen})\n"
         elif epoch < epoch_gen + epoch_disc:
-            display_str = f"Training Phase : Discriminator leveling up ({epoch+1}/{epoch_gen+epoch_disc})"
+            display_str = f"\n Training Phase : Discriminator leveling up ({epoch+1}/{epoch_gen+epoch_disc})\n"
         else:
-            display_str = f"Training Phase : GAN leveling up"
+            display_str = f"\n Training Phase : GAN leveling up\n"
         
         display_str += f'''
             Epoch {epoch+1:5}/{epochs:5} 
             Elapsed time since training         {round(time.time()-start_training, 2):8}s 
-                                  since last epoch   {round(time.time()-start_epoch, 2):8}s
+                                 since last epoch     {round(time.time()-start_epoch, 2):8}s
             '''
         # If generator is training alone, its loss = mae
         if epoch < epoch_gen:
@@ -255,12 +263,10 @@ class CGAN:
     def fit(self, X_ds_train=None, Y_ds_train=None,
             X_ds_val=None, Y_ds_val=None,
             epochs=0, epoch_gen=0, epoch_disc=0,
-            lambda_l1=0, history=None):
+            lambda_l1=0):
         
         start_training = time.time()
         # INITIALIZING
-        if history == None:
-            history = self.initialize_history()
         # Define the trackers to track loss ..
         loss_tracker_train_gen = BinaryCrossentropy()
         loss_tracker_train_disc = BinaryCrossentropy()
@@ -309,7 +315,7 @@ class CGAN:
             res_loss_tracker_train_disc = loss_tracker_train_disc.result().numpy()
             res_metric_tracker_train_disc = metric_tracker_train_disc.result().numpy()
             self.update_history(
-                history, epoch,
+                start_training, start_epoch, epoch,
                 res_metric_tracker_train_gen, res_loss_tracker_train_gen,
                 res_loss_tracker_train_disc, res_metric_tracker_train_disc
                 )
@@ -323,9 +329,6 @@ class CGAN:
                 X_ds_train, Y_ds_train, X_ds_val, Y_ds_val,
                 trackers_to_display
                 )
-
-        return history
-
 
 
 if __name__ == "__main__":
@@ -345,4 +348,4 @@ if __name__ == "__main__":
     epochs = 10
     epoch_gen = 1
     epoch_disc = 1
-    history = model.fit(paint_ds_train, real_ds_train, paint_ds_val, real_ds_val, epochs, epoch_gen, epoch_disc)
+    model.fit(paint_ds_train, real_ds_train, paint_ds_val, real_ds_val, epochs, epoch_gen, epoch_disc)
