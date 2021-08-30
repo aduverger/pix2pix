@@ -44,18 +44,10 @@ class CGAN:
         loss.update_state(ones_like(real_output), real_output)
         loss.update_state(zeros_like(fake_output), fake_output)
 
+
     def update_discriminator_accuracy(self, acc, real_output, fake_output, threshold=0.5):
-        real_proba, fake_proba = [], []
-        for output in iter(real_output):
-            if output <= threshold:
-                real_proba.append(0)
-            else:
-                real_proba.append(1)
-        for output in iter(fake_output):
-            if output <= threshold:
-                fake_proba.append(0)
-            else:
-                fake_proba.append(1)
+        real_proba = [0 if x <= threshold else 1 for x in real_output]
+        fake_proba = [0 if x <= threshold else 1 for x in fake_output]
         acc.update_state(ones_like(real_output), np.array(real_proba))
         acc.update_state(zeros_like(fake_output), np.array(fake_proba))
     
@@ -81,7 +73,6 @@ class CGAN:
         cross.update_state(ones_like(fake_output), fake_output)
     
         
-    @function
     def train_generator_step(self, paint, real_images,
                              loss_tracker_train_gen, loss_tracker_train_disc,
                              metric_tracker_train_gen, metric_tracker_train_disc,
@@ -107,7 +98,6 @@ class CGAN:
         self.update_generator_mae(metric_tracker_train_gen, fake_images, real_images)
 
 
-    @function
     def train_discriminator_step(self, paint, real_images,
                                  loss_tracker_train_gen, loss_tracker_train_disc,
                                  metric_tracker_train_gen, metric_tracker_train_disc):
@@ -131,7 +121,6 @@ class CGAN:
         self.update_generator_mae(metric_tracker_train_gen, fake_images, real_images) 
 
 
-    @function
     def train_gan_step(self, paint, real_images,
                        loss_tracker_train_gen, loss_tracker_train_disc,
                        metric_tracker_train_gen, metric_tracker_train_disc,
@@ -162,7 +151,6 @@ class CGAN:
         self.update_generator_mae(metric_tracker_train_gen, fake_images, real_images)    
     
     
-    @function
     def val_generator_step(self, paint, real_images,
                            loss_tracker_val_gen, loss_tracker_val_disc,
                            metric_tracker_val_gen, metric_tracker_val_disc):
@@ -180,7 +168,6 @@ class CGAN:
         self.update_generator_mae(metric_tracker_val_gen, fake_images, real_images)
     
 
-    @function
     def val_discriminator_step(self, paint, real_images,
                                loss_tracker_val_gen, loss_tracker_val_disc,
                                metric_tracker_val_gen, metric_tracker_val_disc):
@@ -198,7 +185,6 @@ class CGAN:
         self.update_generator_mae(metric_tracker_val_gen, fake_images, real_images) 
 
 
-    @function
     def val_gan_step(self, paint, real_images,
                      loss_tracker_val_gen, loss_tracker_val_disc,
                      metric_tracker_val_gen, metric_tracker_val_disc):
