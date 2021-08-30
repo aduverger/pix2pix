@@ -3,7 +3,8 @@ import glob
 import imageio
 import numpy as np
 from tensorflow import convert_to_tensor
-from tensorflow.data import Dataset
+from tensorflow import data, io, image, stack, cast, shape, float32
+import tensorflow.random as tf_random
 
 def load_data(host='drive', dataset='facades'):
     """Return three tensors of datas (train, val, test), given a certain dataset name (e.g. 'facades).
@@ -108,7 +109,7 @@ def create_dataset(X, batch_size=16) :
         X_ds (tf.Dataset)
     """
 
-    return Dataset.from_tensor_slices(X).batch(batch_size)
+    return data.Dataset.from_tensor_slices(X).batch(batch_size)
 
 def get_facades_datasets(host='drive', batch_size=16):
     """Complete function to get the datasets you need for training a pix2pix model on the facades dataset
@@ -133,7 +134,101 @@ def get_facades_datasets(host='drive', batch_size=16):
 
     return paint_ds_train, paint_ds_val, paint_ds_test, real_ds_train, real_ds_val, real_ds_test
 
+
+def load_and_split_image(image_path):
+    '''
+        Load an image from image_path and split between paint and real images
+    '''
+    image_ = io.read_file(image_path)
+    image_ = image.decode_jpeg(image_)
+
+    # Split each image tensor into two tensors:
+    # - one with a real building facade image
+    # - one with an architecture label image
+    w = shape(image_)[1]
+    w = w // 2
+    paint_image = image_[:, w:, :]
+    real_image = image_[:, :w, :]
+
+    # Convert both images to float32 tensors
+    paint_image = cast(paint_image, float32)
+    real_image = cast(real_image, float32)
+
+    paint_image = (paint_image - 127.5) / 127.5
+    real_image = (real_image - 127.5) / 127.5
+
+    return paint_image, real_image
+
+
+def get_dataset(host='drive', dataset='facades', batch_size=16):
+
+    if host == 'drive':
+        directory = '/content/drive/MyDrive/pix2pix/datasets'
+        if dataset == 'facades':
+            directory += '/resized'
+    else:  #if host == 'local'
+        directory = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            'datasets')
+        if dataset == 'facades':
+            directory += '/facades'
+
+    train_dataset = data.Dataset.list_files(directory + "/train/*.jpg")
+    train_dataset = train_dataset.map(load_and_split_image,
+                                      num_parallel_calls=data.AUTOTUNE)
+    train_dataset = train_dataset.batch(batch_size)
+    print('Importing train DONE!')
+
+    val_dataset = data.Dataset.list_files(directory + "/val/*.jpg")
+    val_dataset = val_dataset.map(load_and_split_image,
+                                  num_parallel_calls=data.AUTOTUNE)
+    val_dataset = val_dataset.batch(batch_size)
+    print('Importing val DONE!')
+
+    test_dataset = data.Dataset.list_files(directory + "/test/*.jpg")
+    test_dataset = test_dataset.map(load_and_split_image,
+                                    num_parallel_calls=data.AUTOTUNE)
+    test_dataset = test_dataset.batch(batch_size)
+    print('Importing test DONE!')
+
+    return train_dataset, val_dataset, test_dataset
+
+
+def resize(input_image, real_image, height, width):
+    input_image = image.resize(input_image, [height, width],
+                               method=image.ResizeMethod.NEAREST_NEIGHBOR)
+    real_image = image.resize(real_image, [height, width],
+                              method=image.ResizeMethod.NEAREST_NEIGHBOR)
+
+    return input_image, real_image
+
+
+def random_crop(input_image, real_image):
+    batch_size = input_image.shape[0]
+    stacked_image = stack([input_image, real_image], axis=0)
+    #print(stacked_image.shape)
+    cropped_image = image.random_crop(stacked_image,
+                                      size=[2, batch_size, 256, 256, 3])
+
+    return cropped_image[0], cropped_image[1]
+
+
+def random_jitter(input_image, real_image):
+    # Resizing to 286x286
+    input_image, real_image = resize(input_image, real_image, 286, 286)
+
+    # Random cropping back to 256x256
+    input_image, real_image = random_crop(input_image, real_image)
+
+    if tf_random.uniform(()) > 0.5:
+        # Random mirroring
+        input_image = image.flip_left_right(input_image)
+        real_image = image.flip_left_right(real_image)
+
+    return input_image, real_image
+
+
 if __name__ == "__main__":
-    paint_ds_train, paint_ds_val, paint_ds_test, real_ds_train, real_ds_val, real_ds_test = get_facades_datasets(host='local')
-    print(type(paint_ds_test))
-    print(real_ds_val)
+    train, val, test = get_dataset(host='local', dataset='facades', batch_size=8)
+    paint, real = next(iter(train))
+    print(paint.shape, real.shape)
