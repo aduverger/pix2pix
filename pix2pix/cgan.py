@@ -45,10 +45,19 @@ class CGAN:
         loss.update_state(zeros_like(fake_output), fake_output)
 
     def update_discriminator_accuracy(self, acc, real_output, fake_output, threshold=0.5):
-        real_proba = [0 if x <= threshold else 1 for x in iter(real_output)]
-        fake_proba = [0 if x <= threshold else 1 for x in iter(fake_output)]
-        acc.update_state(ones_like(real_output), real_proba)
-        acc.update_state(zeros_like(fake_output), fake_proba)
+        real_proba, fake_proba = [], []
+        for output in iter(real_output):
+            if output <= threshold:
+                real_proba.append(0)
+            else:
+                real_proba.append(1)
+        for output in iter(fake_output):
+            if output <= threshold:
+                fake_proba.append(0)
+            else:
+                fake_proba.append(1)
+        acc.update_state(ones_like(real_output), np.array(real_proba))
+        acc.update_state(zeros_like(fake_output), np.array(fake_proba))
     
     def generator_loss(self, fake_images=None, real_images=None, fake_output=None, l1_lambda=100, loss_strategy='both'):
             #TODO with try/except
