@@ -2,7 +2,6 @@ from tensorflow.keras.losses import BinaryCrossentropy as CrossLoss
 from tensorflow.keras.losses import MeanAbsoluteError as L1Loss
 from tensorflow import ones_like, zeros_like, GradientTape, function, expand_dims
 from tensorflow.keras.metrics import BinaryCrossentropy, MeanAbsoluteError, Accuracy
-from tensorflow import numpy_function
 from IPython import display
 import matplotlib.pyplot as plt
 import random
@@ -249,15 +248,15 @@ class CGAN:
         ax.axis('off')
     
     
-    def generate_and_save_images(self, model, epoch, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val, trackers_to_display, random_sample=False):
+    def generate_and_save_images(self, model, epoch, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val, trackers_to_display, random_sample=True):
         display.clear_output(wait=True)
         #TODO: Use next_iter to avoid iterating upon the whole datasets ?
         X_train = [X for X in iter(X_ds_train)]
         Y_train = [Y for Y in iter(Y_ds_train)]
         X_val = [X for X in iter(X_ds_val)]
         Y_val = [Y for Y in iter(Y_ds_val)]
-        
-        if random_sample == False :
+        # Generate index to sample
+        if random_sample:
             index_batch_train = random.randint(0, len(X_train) - 1)
             index_batch_val = random.randint(0, len(X_val) - 1)
             index_train = random.randint(0, X_train[index_batch_train].shape[0] - 1)
@@ -267,20 +266,20 @@ class CGAN:
             index_batch_val = 0
             index_train = 0
             index_val = 0
-
         prediction_train = model(expand_dims(X_train[index_batch_train][index_train], axis=0), training=False)[0]
         prediction_val = model(expand_dims(X_val[index_batch_val][index_val], axis=0), training=False)[0]
 
         fig = plt.figure(constrained_layout=True, figsize=(10,7))
 
-        gs = fig.add_gridspec(5, 3)
+        gs = fig.add_gridspec(5, 6)
         ax1 = fig.add_subplot(gs[0:2, 0])
         ax2 = fig.add_subplot(gs[0:2, 1])
         ax3 = fig.add_subplot(gs[0:2, 2])
         ax4 = fig.add_subplot(gs[2:4, 0])
         ax5 = fig.add_subplot(gs[2:4, 1])
         ax6 = fig.add_subplot(gs[2:4, 2])
-        ax7 = fig.add_subplot(gs[4, :])
+        ax7 = fig.add_subplot(gs[4, :3])
+        ax8 = fig.add_subplot(gs[:, 3:])
         
         self.display_image(ax1, X_train[index_batch_train][index_train])
         ax1.set_title(label="Train sample \n Input")
@@ -296,9 +295,13 @@ class CGAN:
         ax6.set_title(label="Output")
         ax7.text(0, 1, trackers_to_display, ha='left', size='medium')
         ax7.axis('off')
+        
+        ax8.plot()
+        
+        
         fig.savefig('image_at_epoch_{:04d}.png'.format(epoch))
         plt.show()
-
+    
 
     def display_trackers(self, start_training, start_epoch, epoch, epoch_gen, epoch_disc, epochs, res_trackers_dict):
         if epoch < epoch_gen:
@@ -324,10 +327,10 @@ class CGAN:
         else:
             display_str += f'''
             Train set : Generator GAN loss = {res_trackers_dict['loss_tracker_train_gen']:0.2f}        Generator MAE = {res_trackers_dict['metric_tracker_train_gen']:0.2f}
-                            Discriminator loss = {res_trackers_dict['loss_tracker_train_disc']:0.2f}     Discriminator accuracy = {res_trackers_dict['metric_tracker_train_disc']:0.2f}
+                            Discriminator loss = {res_trackers_dict['loss_tracker_train_disc']:0.2f}         Discriminator accuracy = {res_trackers_dict['metric_tracker_train_disc']:0.2f}
             
             Val set :   Generator GAN loss = {res_trackers_dict['loss_tracker_val_gen']:0.2f}        Generator MAE = {res_trackers_dict['metric_tracker_val_gen']:0.2f}
-                            Discriminator loss = {res_trackers_dict['loss_tracker_val_disc']:0.2f}     Discriminator accuracy = {res_trackers_dict['metric_tracker_val_disc']:0.2f}
+                            Discriminator loss = {res_trackers_dict['loss_tracker_val_disc']:0.2f}         Discriminator accuracy = {res_trackers_dict['metric_tracker_val_disc']:0.2f}
             '''
         return display_str
     
@@ -335,7 +338,7 @@ class CGAN:
     def fit(self, X_ds_train=None, Y_ds_train=None,
             X_ds_val=None, Y_ds_val=None,
             epochs=0, epoch_gen=0, epoch_disc=0,
-            l1_lambda=0):
+            l1_lambda=100):
         
         # ==== INITIALIZING ====
         start_training = time.time()
