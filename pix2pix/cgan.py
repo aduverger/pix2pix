@@ -44,7 +44,7 @@ class CGAN:
         loss.update_state(ones_like(real_output), real_output)
         loss.update_state(zeros_like(fake_output), fake_output)
 
-    def update_discriminator_loss(self, acc, real_output, fake_output, threshold=0.5):
+    def update_discriminator_accuracy(self, acc, real_output, fake_output, threshold=0.5):
         pass
         
         real_proba = [0 if x <= threshold else 1 for x in real_output]
