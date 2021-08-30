@@ -247,28 +247,17 @@ class CGAN:
     def display_image(self, ax, sample_tensor):
         ax.imshow((sample_tensor * 127.5 + 127.5).numpy().astype('uint8'))
         ax.axis('off')
-<<<<<<< HEAD
-    
-    
-    def generate_and_save_images(self, model, epoch, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val, trackers_to_display, random_sample=True):
-=======
 
 
-    def generate_and_save_images(self, model, epoch, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val, trackers_to_display, random_sample=False):
->>>>>>> e099acbb4aad4191ddcd7c1b0e798aea3581b37b
+    def generate_and_save_images(self, model, epoch, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val, trackers_to_display):
         display.clear_output(wait=True)
         #TODO: Use next_iter to avoid iterating upon the whole datasets ?
         X_train = [X for X in iter(X_ds_train)]
         Y_train = [Y for Y in iter(Y_ds_train)]
         X_val = [X for X in iter(X_ds_val)]
         Y_val = [Y for Y in iter(Y_ds_val)]
-<<<<<<< HEAD
         # Generate index to sample
-        if random_sample:
-=======
-
-        if random_sample :
->>>>>>> e099acbb4aad4191ddcd7c1b0e798aea3581b37b
+        if self.random_sample:
             index_batch_train = random.randint(0, len(X_train) - 1)
             index_batch_val = random.randint(0, len(X_val) - 1)
             index_train = random.randint(0, X_train[index_batch_train].shape[0] - 1)
@@ -290,14 +279,8 @@ class CGAN:
         ax4 = fig.add_subplot(gs[2:4, 0])
         ax5 = fig.add_subplot(gs[2:4, 1])
         ax6 = fig.add_subplot(gs[2:4, 2])
-<<<<<<< HEAD
         ax7 = fig.add_subplot(gs[4, :3])
         ax8 = fig.add_subplot(gs[:, 3:])
-        
-=======
-        ax7 = fig.add_subplot(gs[4, :])
-
->>>>>>> e099acbb4aad4191ddcd7c1b0e798aea3581b37b
         self.display_image(ax1, X_train[index_batch_train][index_train])
         ax1.set_title(label="Train sample \n Input")
         self.display_image(ax2, prediction_train)
@@ -312,9 +295,6 @@ class CGAN:
         ax6.set_title(label="Ground truth")
         ax7.text(0, 1, trackers_to_display, ha='left', size='medium')
         ax7.axis('off')
-        
-        ax8.plot()
-        
         
         fig.savefig('image_at_epoch_{:04d}.png'.format(epoch))
         plt.show()
@@ -345,13 +325,8 @@ class CGAN:
         else:
             display_str += f'''
             Train set : Generator GAN loss = {res_trackers_dict['loss_tracker_train_gen']:0.2f}        Generator MAE = {res_trackers_dict['metric_tracker_train_gen']:0.2f}
-<<<<<<< HEAD
                             Discriminator loss = {res_trackers_dict['loss_tracker_train_disc']:0.2f}         Discriminator accuracy = {res_trackers_dict['metric_tracker_train_disc']:0.2f}
             
-=======
-                            Discriminator loss = {res_trackers_dict['loss_tracker_train_disc']:0.2f}     Discriminator accuracy = {res_trackers_dict['metric_tracker_train_disc']:0.2f}
-
->>>>>>> e099acbb4aad4191ddcd7c1b0e798aea3581b37b
             Val set :   Generator GAN loss = {res_trackers_dict['loss_tracker_val_gen']:0.2f}        Generator MAE = {res_trackers_dict['metric_tracker_val_gen']:0.2f}
                             Discriminator loss = {res_trackers_dict['loss_tracker_val_disc']:0.2f}         Discriminator accuracy = {res_trackers_dict['metric_tracker_val_disc']:0.2f}
             '''
@@ -361,13 +336,7 @@ class CGAN:
     def fit(self, X_ds_train=None, Y_ds_train=None,
             X_ds_val=None, Y_ds_val=None,
             epochs=0, epoch_gen=0, epoch_disc=0,
-<<<<<<< HEAD
             l1_lambda=100):
-        
-=======
-            l1_lambda=0):
-
->>>>>>> e099acbb4aad4191ddcd7c1b0e798aea3581b37b
         # ==== INITIALIZING ====
         start_training = time.time()
         self.initialize_history(epochs=epochs, epoch_gen=epoch_gen, epoch_disc=epoch_disc, l1_lambda=l1_lambda)
