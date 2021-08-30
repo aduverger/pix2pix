@@ -45,7 +45,6 @@ class CGAN:
         loss.update_state(zeros_like(fake_output), fake_output)
 
     def update_discriminator_accuracy(self, acc, real_output, fake_output, threshold=0.5):
-        pass
         real_proba = [0 if x <= threshold else 1 for x in iter(real_output)]
         fake_proba = [0 if x <= threshold else 1 for x in iter(fake_output)]
         acc.update_state(ones_like(real_output), real_proba)
@@ -93,7 +92,7 @@ class CGAN:
         # Track loss and metrics
             # For discriminators
         self.update_discriminator_loss(loss_tracker_train_disc, real_output, fake_output)
-        self.update_discriminator_loss(metric_tracker_train_disc, real_output, fake_output)
+        self.update_discriminator_accuracy(metric_tracker_train_disc, real_output, fake_output)
             # For generators
         self.update_generator_cross(loss_tracker_train_gen, fake_output)
         self.update_generator_mae(metric_tracker_train_gen, fake_images, real_images)
@@ -117,7 +116,7 @@ class CGAN:
         # Track loss and metrics
             # For discriminators
         self.update_discriminator_loss(loss_tracker_train_disc, real_output, fake_output)
-        self.update_discriminator_loss(metric_tracker_train_disc, real_output, fake_output)
+        self.update_discriminator_accuracy(metric_tracker_train_disc, real_output, fake_output)
             # For generators
         self.update_generator_cross(loss_tracker_train_gen, fake_output)
         self.update_generator_mae(metric_tracker_train_gen, fake_images, real_images) 
@@ -148,7 +147,7 @@ class CGAN:
         # Track loss and metrics
             # For discriminators
         self.update_discriminator_loss(loss_tracker_train_disc, real_output, fake_output)
-        self.update_discriminator_loss(metric_tracker_train_disc, real_output, fake_output)
+        self.update_discriminator_accuracy(metric_tracker_train_disc, real_output, fake_output)
             # For generators
         self.update_generator_cross(loss_tracker_train_gen, fake_output)
         self.update_generator_mae(metric_tracker_train_gen, fake_images, real_images)    
@@ -166,7 +165,7 @@ class CGAN:
         # Track loss and metrics
             # For discriminators
         self.update_discriminator_loss(loss_tracker_val_disc, real_output, fake_output)
-        self.update_discriminator_loss(metric_tracker_val_disc, real_output, fake_output)
+        self.update_discriminator_accuracy(metric_tracker_val_disc, real_output, fake_output)
             # For generators
         self.update_generator_cross(loss_tracker_val_gen, fake_output)
         self.update_generator_mae(metric_tracker_val_gen, fake_images, real_images)
@@ -184,7 +183,7 @@ class CGAN:
         # Track loss and metrics
             # For discriminators
         self.update_discriminator_loss(loss_tracker_val_disc, real_output, fake_output)
-        self.update_discriminator_loss(metric_tracker_val_disc, real_output, fake_output)
+        self.update_discriminator_accuracy(metric_tracker_val_disc, real_output, fake_output)
             # For generators
         self.update_generator_cross(loss_tracker_val_gen, fake_output)
         self.update_generator_mae(metric_tracker_val_gen, fake_images, real_images) 
@@ -202,7 +201,7 @@ class CGAN:
         # Track loss and metrics
             # For discriminators
         self.update_discriminator_loss(loss_tracker_val_disc, real_output, fake_output)
-        self.update_discriminator_loss(metric_tracker_val_disc, real_output, fake_output)
+        self.update_discriminator_accuracy(metric_tracker_val_disc, real_output, fake_output)
             # For generators
         self.update_generator_cross(loss_tracker_val_gen, fake_output)
         self.update_generator_mae(metric_tracker_val_gen, fake_images, real_images)    
