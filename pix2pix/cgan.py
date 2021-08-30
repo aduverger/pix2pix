@@ -202,7 +202,6 @@ class CGAN:
 
 
     def initialize_history(self, epochs=0, epoch_gen=0, epoch_disc=0, l1_lambda=0):
-        #TODO : Add epoch, epoch_gen, epoch_disc, l1_lambda
         history = {
             'epochs': epochs,
             'epoch_gen': epoch_gen,
@@ -270,15 +269,16 @@ class CGAN:
         prediction_train = model(expand_dims(X_train[index_batch_train][index_train], axis=0), training=False)[0]
         prediction_val = model(expand_dims(X_val[index_batch_val][index_val], axis=0), training=False)[0]
 
-        fig = plt.figure(constrained_layout=True, figsize=(9,6))
-        gs = fig.add_gridspec(3, 3)
-        ax1 = fig.add_subplot(gs[0, 0])
-        ax2 = fig.add_subplot(gs[0, 1])
-        ax3 = fig.add_subplot(gs[0, 2])
-        ax4 = fig.add_subplot(gs[1, 0])
-        ax5 = fig.add_subplot(gs[1, 1])
-        ax6 = fig.add_subplot(gs[1, 2])
-        ax7 = fig.add_subplot(gs[2, :])
+        fig = plt.figure(constrained_layout=True, figsize=(10,7))
+
+        gs = fig.add_gridspec(5, 3)
+        ax1 = fig.add_subplot(gs[0:2, 0])
+        ax2 = fig.add_subplot(gs[0:2, 1])
+        ax3 = fig.add_subplot(gs[0:2, 2])
+        ax4 = fig.add_subplot(gs[2:4, 0])
+        ax5 = fig.add_subplot(gs[2:4, 1])
+        ax6 = fig.add_subplot(gs[2:4, 2])
+        ax7 = fig.add_subplot(gs[4, :])
         
         self.display_image(ax1, X_train[index_batch_train][index_train])
         ax1.set_title(label="Train sample \n Input")
