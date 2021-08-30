@@ -248,7 +248,7 @@ class CGAN:
         ax.axis('off')
     
     
-    def generate_and_save_images(self, model, epoch, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val, trackers_to_display, random=False):
+    def generate_and_save_images(self, model, epoch, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val, trackers_to_display, random_sample=False):
         display.clear_output(wait=True)
         #TODO: Use next_iter to avoid iterating upon the whole datasets ?
         X_train = [X for X in iter(X_ds_train)]
@@ -256,7 +256,7 @@ class CGAN:
         X_val = [X for X in iter(X_ds_val)]
         Y_val = [Y for Y in iter(Y_ds_val)]
         
-        if random == False :
+        if random_sample == False :
             index_batch_train = random.randint(0, len(X_train) - 1)
             index_batch_val = random.randint(0, len(X_val) - 1)
             index_train = random.randint(0, X_train[index_batch_train].shape[0] - 1)
