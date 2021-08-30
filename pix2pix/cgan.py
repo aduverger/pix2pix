@@ -150,8 +150,7 @@ class CGAN:
     @function
     def val_generator_step(self, paint, real_images,
                            loss_tracker_val_gen, loss_tracker_val_disc,
-                           metric_tracker_val_gen, metric_tracker_val_disc,
-                           l1_lambda):
+                           metric_tracker_val_gen, metric_tracker_val_disc):
         # Forward propagation
         fake_images = self.generator(paint, training=True)
         real_output = self.discriminator(real_images, training=True)
@@ -186,8 +185,8 @@ class CGAN:
 
     @function
     def val_gan_step(self, paint, real_images,
-                       loss_tracker_val_gen, loss_tracker_val_disc,
-                       metric_tracker_val_gen, metric_tracker_val_disc):
+                     loss_tracker_val_gen, loss_tracker_val_disc,
+                     metric_tracker_val_gen, metric_tracker_val_disc):
         # Forward propagation
         fake_images = self.generator(paint, training=True)
         real_output = self.discriminator(real_images, training=True)
@@ -298,13 +297,9 @@ class CGAN:
 
         fig.savefig('image_at_epoch_{:04d}.png'.format(epoch))
         plt.show()
-        
-        
+
+
     def display_trackers(self, start_training, start_epoch, epoch, epoch_gen, epoch_disc, epochs, res_trackers_dict):
-        # [loss_tracker_train_gen, loss_tracker_train_disc,
-        #                 metric_tracker_train_gen, metric_tracker_train_disc,
-        #                 loss_tracker_val_gen, loss_tracker_val_disc,
-        #                 metric_tracker_val_gen, metric_tracker_val_disc]
         if epoch < epoch_gen:
             display_str = f"\n Training Phase : Generator leveling up ({epoch+1}/{epoch_gen})\n"
         elif epoch < epoch_gen + epoch_disc:
@@ -328,6 +323,7 @@ class CGAN:
             display_str += f'''
             Train set : Generator GAN loss = {res_trackers_dict['loss_tracker_train_gen']:0.2f}        Generator MAE = {res_trackers_dict['metric_tracker_train_gen']:0.2f}
                             Discriminator loss = {res_trackers_dict['loss_tracker_train_disc']:0.4f}     Discriminator accuracy = {res_trackers_dict['metric_tracker_train_disc']:0.4f}
+            
             Val set :   Generator GAN loss = {res_trackers_dict['loss_tracker_val_gen']:0.2f}        Generator MAE = {res_trackers_dict['metric_tracker_val_gen']:0.2f}
                             Discriminator loss = {res_trackers_dict['loss_tracker_val_disc']:0.4f}     Discriminator accuracy = {res_trackers_dict['metric_tracker_val_disc']:0.4f}
             '''
@@ -339,7 +335,7 @@ class CGAN:
             epochs=0, epoch_gen=0, epoch_disc=0,
             l1_lambda=0):
         
-        # INITIALIZING
+        # ==== INITIALIZING ====
         start_training = time.time()
         self.initialize_history(epochs=epochs, epoch_gen=epoch_gen, epoch_disc=epoch_disc, l1_lambda=l1_lambda)
         # Define the trackers to track loss ..
@@ -360,14 +356,14 @@ class CGAN:
         # Define a list with all trackers' name as String
         trackers_name_list = [tracker.name for tracker in trackers_list]
         
-        # START FITING
+        # ==== START FITING =====
         for epoch in range(epochs):
             start_epoch = time.time()
             # Reset trackers for loss and metrics
             for tracker in trackers_list:
                 tracker.reset_state()
 
-            # TRAINING PHASE ON EACH BATCH
+            # === TRAINING PHASE ON EACH BATCH ===
             for paint_train_batch, image_train_batch in zip(X_ds_train, Y_ds_train):
                 # if epoch < epoch_gen, train the generator alone
                 if epoch < epoch_gen:
@@ -392,15 +388,14 @@ class CGAN:
                         l1_lambda
                         )
 
-            # VALIDATION PHASE ON EACH BATCH
+            # === VALIDATION PHASE ON EACH BATCH ===
             for paint_val_batch, image_val_batch in zip(X_ds_val, Y_ds_val):
                 # if epoch < epoch_gen, validate the generator alone
                 if epoch < epoch_gen:
                     self.val_generator_step(
                         paint_val_batch, image_val_batch,
                         loss_tracker_val_gen, loss_tracker_val_disc,
-                        metric_tracker_val_gen, metric_tracker_val_disc,
-                        l1_lambda
+                        metric_tracker_val_gen, metric_tracker_val_disc
                         )
                 # for epoch >= epoch_gen, validate generator + discriminator
                 elif epoch < epoch_disc + epoch_gen:
@@ -413,11 +408,10 @@ class CGAN:
                     self.val_gan_step(
                         paint_val_batch, image_val_batch,
                         loss_tracker_val_gen, loss_tracker_val_disc,
-                        metric_tracker_val_gen, metric_tracker_val_disc,
-                        l1_lambda
+                        metric_tracker_val_gen, metric_tracker_val_disc
                         )
 
-            # OUTPUT AND SAVE IMAGES+TRACKERS AT EACH EPOCH
+            # === OUTPUT AND SAVE IMAGES+TRACKERS AT EACH EPOCH ===
                 # Create a list with all the trackers' results
             res_trackers_list = [tracker.result().numpy() for tracker in trackers_list]
                 # Then create a dict with trackers' names as keys and trackers' results as values
