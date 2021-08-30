@@ -17,17 +17,13 @@ Main class for pix2pix project. Implement a full CGAN model that can be fit.
 """
 
 class CGAN:
-    def __init__(self, generator, discriminator=None, history=None):
+    def __init__(self, generator, discriminator=None):
         self.generator = generator
         self.discriminator = discriminator
         self.gen_optimizer = Adam(1e-4)
         self.disc_optimizer = Adam(1e-4)
         self.cross_entropy = CrossLoss(from_logits=False)
         self.l1 = L1Loss()
-        if history == None:
-            self.initialize_history()
-        else:
-            self.history = history
     
     
     #TODO add the possibility to add different metrics
@@ -206,9 +202,13 @@ class CGAN:
         self.update_generator_mae(metric_tracker_val_gen, fake_images, real_images)    
 
 
-    def initialize_history(self):
+    def initialize_history(self, epochs=0, epoch_gen=0, epoch_disc=0, l1_lambda=0):
         #TODO : Add epoch, epoch_gen, epoch_disc, l1_lambda
         history = {
+            'epochs': epochs,
+            'epoch_gen': epoch_gen,
+            'epoch_disc': epoch_disc,
+            'l1_lambda': l1_lambda,
             'epoch_index': [],
             'time_epoch': [],
             'time_cumulative': [],
@@ -334,8 +334,9 @@ class CGAN:
             epochs=0, epoch_gen=0, epoch_disc=0,
             l1_lambda=0):
         
-        start_training = time.time()
         # INITIALIZING
+        start_training = time.time()
+        self.initialize_history(epochs=epochs, epoch_gen=epoch_gen, epoch_disc=epoch_disc, l1_lambda=l1_lambda)
         # Define the trackers to track loss ..
         loss_tracker_train_gen = BinaryCrossentropy(name='loss_tracker_train_gen')
         loss_tracker_train_disc = BinaryCrossentropy(name='loss_tracker_train_disc')
@@ -434,7 +435,7 @@ if __name__ == "__main__":
     discriminator = make_discriminator_model()
     model = CGAN(generator, discriminator)
     
-    epochs = 10
-    epoch_gen = 1
-    epoch_disc = 1
-    model.fit(paint_ds_train, real_ds_train, paint_ds_val, real_ds_val, epochs, epoch_gen, epoch_disc, l1_lambda=100)
+    model.fit(X_ds_train=paint_ds_train, Y_ds_train=real_ds_train,
+              X_ds_val=paint_ds_val, Y_ds_val=real_ds_val,
+              epochs=10, epoch_gen=1, epoch_disc=1,
+              l1_lambda=100)
