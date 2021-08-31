@@ -29,14 +29,14 @@ def plot_last_n_epochs(ax, history, n=50, set_name='train', show_label=True):
     # GENERATOR TRAINING AREA
     if epoch_gen != 0 and last_epoch > epoch_gen > start_epoch:
         if not show_label:
-            ax.text((epoch_gen+start_epoch)/2, -0.1, 'Generator\ntraining', color='tab:blue', ha='center', va='top')
+            ax.text((epoch_gen+start_epoch)/2, -0.2, 'Generator\ntraining', color='tab:blue', ha='center', va='top')
         ax.fill_between(np.arange(0, epoch_gen, 0.01), 0, 1,
                     color='tab:blue', alpha=0.05, transform=ax.get_xaxis_transform())
 
     # DISCRIMINATOR TRAINING AREA
     if epoch_disc != 0 and last_epoch > epoch_disc > start_epoch:
         if not show_label:
-            ax.text(epoch_disc/2 + epoch_gen, -0.1, 'Discriminator\ntraining', color='tab:red', ha='center', va='top')
+            ax.text(epoch_disc/2 + epoch_gen, -0.2, 'Discriminator\ntraining', color='tab:red', ha='center', va='top')
         ax.fill_between(np.arange(epoch_gen, epoch_gen+epoch_disc, 0.01), 0, 1,
                     color='tab:red', alpha=0.05, transform=ax.get_xaxis_transform())
 
@@ -46,7 +46,7 @@ def plot_last_n_epochs(ax, history, n=50, set_name='train', show_label=True):
         lines2, labels2 = twin.get_legend_handles_labels()
         ax.legend(lines2 + lines, labels2 + labels, loc=2)
         twin.legend([],[], frameon=False)
-        sns.move_legend(ax, "lower center", bbox_to_anchor=(.5, 1.2), ncol=3, title=None, frameon=False)
+        sns.move_legend(ax, "lower center", bbox_to_anchor=(.5, 1.1), ncol=3, title=None, frameon=False)
     else:
         ax.legend([],[], frameon=False)
         twin.legend([],[], frameon=False)
