@@ -25,7 +25,7 @@ class CGAN:
         self.cross_entropy = CrossLoss(from_logits=False)
         self.l1 = L1Loss()
         self.random_sample = True
-        self.disc_threshold = 0
+        self.disc_threshold = 0.5
 
     #TODO add the possibility to add different metrics
     def compile(self, gen_optimizer, disc_optimizer, gen_metrics, disc_metrics):
@@ -249,55 +249,53 @@ class CGAN:
         ax.axis('off')
 
 
-    def generate_and_save_images(self, model, epoch, train_ds, val_ds, trackers_to_display):
+    def generate_and_save_images(self, model, epoch, X_ds_train, Y_ds_train, X_ds_val, Y_ds_val, trackers_to_display):
         display.clear_output(wait=True)
         #TODO: Use next_iter to avoid iterating upon the whole datasets ?
-        train_list = [(paint, real) for paint, real in iter(train_ds)]
-        val_list = [(paint, real) for paint, real in iter(val_ds)]
-
-        if self.random_sample :
-            index_batch_train = random.randint(0, len(train_list) - 1)
-            index_batch_val = random.randint(0, len(val_list) - 1)
-            index_train = random.randint(0, train_list[index_batch_train][0].shape[0] - 1)
-            index_val = random.randint(0, val_list[index_batch_val][0].shape[0] - 1)
+        X_train = [X for X in iter(X_ds_train)]
+        Y_train = [Y for Y in iter(Y_ds_train)]
+        X_val = [X for X in iter(X_ds_val)]
+        Y_val = [Y for Y in iter(Y_ds_val)]
+        # Generate index to sample
+        if self.random_sample:
+            index_batch_train = random.randint(0, len(X_train) - 1)
+            index_batch_val = random.randint(0, len(X_val) - 1)
+            index_train = random.randint(0, X_train[index_batch_train].shape[0] - 1)
+            index_val = random.randint(0, X_val[index_batch_val].shape[0] - 1)
         else:
             index_batch_train = 0
             index_batch_val = 0
             index_train = 0
             index_val = 0
-
-        prediction_train = model(expand_dims(
-            train_list[index_batch_train][0][index_train], axis=0),
-                                 training=False)
-        prediction_val = model(expand_dims(
-            val_list[index_batch_val][0][index_val], axis=0),
-                               training=False)
+        prediction_train = model(expand_dims(X_train[index_batch_train][index_train], axis=0), training=False)[0]
+        prediction_val = model(expand_dims(X_val[index_batch_val][index_val], axis=0), training=False)[0]
 
         fig = plt.figure(constrained_layout=True, figsize=(10,7))
 
-        gs = fig.add_gridspec(5, 3)
+        gs = fig.add_gridspec(5, 6)
         ax1 = fig.add_subplot(gs[0:2, 0])
         ax2 = fig.add_subplot(gs[0:2, 1])
         ax3 = fig.add_subplot(gs[0:2, 2])
         ax4 = fig.add_subplot(gs[2:4, 0])
         ax5 = fig.add_subplot(gs[2:4, 1])
         ax6 = fig.add_subplot(gs[2:4, 2])
-        ax7 = fig.add_subplot(gs[4, :])
-
-        self.display_image(ax1, train_list[index_batch_train][0][index_train])
+        ax7 = fig.add_subplot(gs[4, :3])
+        ax8 = fig.add_subplot(gs[:, 3:])
+        self.display_image(ax1, X_train[index_batch_train][index_train])
         ax1.set_title(label="Train sample \n Input")
-        self.display_image(ax2, prediction_train[0])
+        self.display_image(ax2, prediction_train)
         ax2.set_title(label=f"Output")
-        self.display_image(ax3, train_list[index_batch_train][1][index_train])
+        self.display_image(ax3, Y_train[index_batch_train][index_train])
         ax3.set_title(label="Ground truth")
-        self.display_image(ax4, val_list[index_batch_val][0][index_val])
+        self.display_image(ax4, X_val[index_batch_val][index_val])
         ax4.set_title(label="Val sample \n Input")
-        self.display_image(ax5, prediction_val[0])
+        self.display_image(ax5, prediction_val)
         ax5.set_title(label="Output")
-        self.display_image(ax6, val_list[index_batch_val][1][index_val])
+        self.display_image(ax6, Y_val[index_batch_val][index_val])
         ax6.set_title(label="Ground truth")
         ax7.text(0, 1, trackers_to_display, ha='left', size='medium')
         ax7.axis('off')
+        
         fig.savefig('image_at_epoch_{:04d}.png'.format(epoch))
         plt.show()
     
@@ -335,7 +333,102 @@ class CGAN:
         return display_str
 
 
-    def fit(self,
+    def fit(self, X_ds_train=None, Y_ds_train=None,
+            X_ds_val=None, Y_ds_val=None,
+            epochs=0, epoch_gen=0, epoch_disc=0,
+            l1_lambda=100):
+        # ==== INITIALIZING ====
+        start_training = time.time()
+        self.initialize_history(epochs=epochs, epoch_gen=epoch_gen, epoch_disc=epoch_disc, l1_lambda=l1_lambda)
+        # Define the trackers to track loss ..
+        loss_tracker_train_gen = BinaryCrossentropy(name='loss_tracker_train_gen')
+        loss_tracker_train_disc = BinaryCrossentropy(name='loss_tracker_train_disc')
+        loss_tracker_val_gen = BinaryCrossentropy(name='loss_tracker_val_gen')
+        loss_tracker_val_disc = BinaryCrossentropy(name='loss_tracker_val_disc')
+        # .. and metrics
+        metric_tracker_train_gen = MeanAbsoluteError(name='metric_tracker_train_gen')
+        metric_tracker_train_disc = Accuracy(name='metric_tracker_train_disc')
+        metric_tracker_val_gen = MeanAbsoluteError(name='metric_tracker_val_gen')
+        metric_tracker_val_disc = Accuracy(name='metric_tracker_val_disc')
+        # Define a list of all the trackers, to ease their reset at each epoch
+        trackers_list = [loss_tracker_train_gen, loss_tracker_train_disc,
+                        metric_tracker_train_gen, metric_tracker_train_disc,
+                        loss_tracker_val_gen, loss_tracker_val_disc,
+                        metric_tracker_val_gen, metric_tracker_val_disc]
+        # Define a list with all trackers' name as String
+        trackers_name_list = [tracker.name for tracker in trackers_list]
+
+        # ==== START FITING =====
+        for epoch in range(epochs):
+            start_epoch = time.time()
+            # Reset trackers for loss and metrics
+            for tracker in trackers_list:
+                tracker.reset_state()
+
+            # === TRAINING PHASE ON EACH BATCH ===
+            for paint_train_batch, image_train_batch in zip(X_ds_train, Y_ds_train):
+                # if epoch < epoch_gen, train the generator alone
+                if epoch < epoch_gen:
+                    self.train_generator_step(
+                        paint_train_batch, image_train_batch,
+                        loss_tracker_train_gen, loss_tracker_train_disc,
+                        metric_tracker_train_gen, metric_tracker_train_disc,
+                        l1_lambda
+                        )
+                # for epoch >= epoch_gen, validate generator + discriminator
+                elif epoch < epoch_disc + epoch_gen:
+                    self.train_discriminator_step(
+                        paint_train_batch, image_train_batch,
+                        loss_tracker_train_gen, loss_tracker_train_disc,
+                        metric_tracker_train_gen, metric_tracker_train_disc
+                        )
+                else:
+                    self.train_gan_step(
+                        paint_train_batch, image_train_batch,
+                        loss_tracker_train_gen, loss_tracker_train_disc,
+                        metric_tracker_train_gen, metric_tracker_train_disc,
+                        l1_lambda
+                        )
+
+            # === VALIDATION PHASE ON EACH BATCH ===
+            for paint_val_batch, image_val_batch in zip(X_ds_val, Y_ds_val):
+                # if epoch < epoch_gen, validate the generator alone
+                if epoch < epoch_gen:
+                    self.val_generator_step(
+                        paint_val_batch, image_val_batch,
+                        loss_tracker_val_gen, loss_tracker_val_disc,
+                        metric_tracker_val_gen, metric_tracker_val_disc
+                        )
+                # for epoch >= epoch_gen, validate generator + discriminator
+                elif epoch < epoch_disc + epoch_gen:
+                    self.val_discriminator_step(
+                        paint_val_batch, image_val_batch,
+                        loss_tracker_val_gen, loss_tracker_val_disc,
+                        metric_tracker_val_gen, metric_tracker_val_disc
+                        )
+                else:
+                    self.val_gan_step(
+                        paint_val_batch, image_val_batch,
+                        loss_tracker_val_gen, loss_tracker_val_disc,
+                        metric_tracker_val_gen, metric_tracker_val_disc
+                        )
+
+            # === OUTPUT AND SAVE IMAGES+TRACKERS AT EACH EPOCH ===
+            # Create a list with all the trackers' results
+            res_trackers_list = [tracker.result().numpy() for tracker in trackers_list]
+            # Then create a dict with trackers' names as keys and trackers' results as values
+            res_trackers_dict = dict(zip(trackers_name_list, res_trackers_list))
+
+            self.update_history(start_training, start_epoch, epoch, res_trackers_dict)
+            trackers_to_display = self.display_trackers(start_training, start_epoch, epoch, epoch_gen,
+                                                        epoch_disc, epochs, res_trackers_dict)
+            self.generate_and_save_images(self.generator, epoch, X_ds_train, Y_ds_train,
+                                          X_ds_val, Y_ds_val, trackers_to_display)
+
+
+    #### NEW FUNCTIONS USING ####
+
+    def fit_ds(self,
             train_ds=None,
             val_ds=None,
             epochs=0,
@@ -445,10 +538,63 @@ class CGAN:
             trackers_to_display = self.display_trackers(
                 start_training, start_epoch, epoch, epoch_gen, epoch_disc,
                 epochs, res_trackers_dict)
-            self.generate_and_save_images(self.generator, epoch,
+            self.generate_and_save_images_from_ds(self.generator, epoch,
                                                   train_ds, val_ds,
                                                   trackers_to_display)
 
+    def generate_and_save_images_from_ds(self, model, epoch, train_ds, val_ds, trackers_to_display):
+        display.clear_output(wait=True)
+        #TODO: Use next_iter to avoid iterating upon the whole datasets ?
+        train_list = [(paint, real) for paint, real in iter(train_ds)]
+        val_list = [(paint, real) for paint, real in iter(val_ds)]
+
+        if self.random_sample :
+            index_batch_train = random.randint(0, len(train_list) - 1)
+            index_batch_val = random.randint(0, len(val_list) - 1)
+            index_train = random.randint(0, train_list[index_batch_train][0].shape[0] - 1)
+            index_val = random.randint(0, val_list[index_batch_val][0].shape[0] - 1)
+        else:
+            index_batch_train = 0
+            index_batch_val = 0
+            index_train = 0
+            index_val = 0
+
+
+
+        prediction_train = model(expand_dims(
+            train_list[index_batch_train][0][index_train], axis=0),
+                                 training=False)
+        prediction_val = model(expand_dims(
+            val_list[index_batch_val][0][index_val], axis=0),
+                               training=False)
+
+        fig = plt.figure(constrained_layout=True, figsize=(10,7))
+
+        gs = fig.add_gridspec(5, 3)
+        ax1 = fig.add_subplot(gs[0:2, 0])
+        ax2 = fig.add_subplot(gs[0:2, 1])
+        ax3 = fig.add_subplot(gs[0:2, 2])
+        ax4 = fig.add_subplot(gs[2:4, 0])
+        ax5 = fig.add_subplot(gs[2:4, 1])
+        ax6 = fig.add_subplot(gs[2:4, 2])
+        ax7 = fig.add_subplot(gs[4, :])
+
+        self.display_image(ax1, train_list[index_batch_train][0][index_train])
+        ax1.set_title(label="Train sample \n Input")
+        self.display_image(ax2, prediction_train[0])
+        ax2.set_title(label=f"Output")
+        self.display_image(ax3, train_list[index_batch_train][1][index_train])
+        ax3.set_title(label="Ground truth")
+        self.display_image(ax4, val_list[index_batch_val][0][index_val])
+        ax4.set_title(label="Val sample \n Input")
+        self.display_image(ax5, prediction_val[0])
+        ax5.set_title(label="Output")
+        self.display_image(ax6, val_list[index_batch_val][1][index_val])
+        ax6.set_title(label="Ground truth")
+        ax7.text(0, 1, trackers_to_display, ha='left', size='medium')
+        ax7.axis('off')
+        fig.savefig('image_at_epoch_{:04d}.png'.format(epoch))
+        plt.show()
 
 
 
@@ -460,9 +606,9 @@ if __name__ == "__main__":
     discriminator = make_dummy_discriminator()
     model = CGAN(generator, discriminator)
 
-    #model.generate_and_save_images_from(generator, 10, train, val,None)
+    #model.generate_and_save_images_from_ds(generator, 10, train, val,None)
 
-    model.fit(train_ds=train,
+    model.fit_ds(train_ds=train,
               val_ds=val,
               epochs=10, epoch_gen=1, epoch_disc=1,
               l1_lambda=100)
