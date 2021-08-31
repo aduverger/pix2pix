@@ -195,6 +195,8 @@ class CGAN:
             disc_real_input = real_images
             disc_fake_input = fake_images
 
+        real_output = self.discriminator(disc_real_input, training=True)
+        fake_output = self.discriminator(disc_fake_input, training=True)
         # Track loss and metrics
         # For discriminators
         self.update_discriminator_loss(loss_tracker_val_disc, real_output, fake_output)
@@ -215,6 +217,9 @@ class CGAN:
         else:
             disc_real_input = real_images
             disc_fake_input = fake_images
+
+        real_output = self.discriminator(disc_real_input, training=True)
+        fake_output = self.discriminator(disc_fake_input, training=True)
         # Track loss and metrics
         # For discriminators
         self.update_discriminator_loss(loss_tracker_val_disc, real_output, fake_output)
