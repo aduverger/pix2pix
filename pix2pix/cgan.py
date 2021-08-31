@@ -177,8 +177,14 @@ class CGAN:
                            metric_tracker_val_gen, metric_tracker_val_disc):
         # Forward propagation
         fake_images = self.generator(paint_images, training=True)
-        real_output = self.discriminator(real_images, training=True)
-        fake_output = self.discriminator(fake_images, training=True)
+        if self.cgan_mode: # in cgan mode the paint images are also used as input of the discriminator
+            disc_real_input = concat([paint_images, real_images], axis=3) # stack images on the column axis, i.e. the same we use to split them beforehand
+            disc_fake_input = concat([paint_images, fake_images], axis=3)
+        else:
+            disc_real_input = real_images
+            disc_fake_input = fake_images
+        real_output = self.discriminator(disc_real_input, training=True)
+        fake_output = self.discriminator(disc_fake_input, training=True)
 
         # Track loss and metrics
         # For discriminators
