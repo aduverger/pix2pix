@@ -24,7 +24,7 @@ class CGAN:
         self.discriminator = discriminator
         self.gen_optimizer = Adam(1e-4)
         self.disc_optimizer = Adam(1e-4)
-        self.cross_entropy = CrossLoss(from_logits=False)
+        self.cross_entropy = CrossLoss(from_logits=True)
         self.l1 = L1Loss()
         self.random_sample = True
         self.disc_threshold = 0
@@ -396,12 +396,13 @@ class CGAN:
                                 l1_lambda=l1_lambda)
         # Define the trackers to track loss ..
         loss_tracker_train_gen = BinaryCrossentropy(
-            name='loss_tracker_train_gen')
+            name='loss_tracker_train_gen', from_logits=True)
         loss_tracker_train_disc = BinaryCrossentropy(
-            name='loss_tracker_train_disc')
-        loss_tracker_val_gen = BinaryCrossentropy(name='loss_tracker_val_gen')
+            name='loss_tracker_train_disc', from_logits=True)
+        loss_tracker_val_gen = BinaryCrossentropy(
+            name='loss_tracker_val_gen', from_logits=True)
         loss_tracker_val_disc = BinaryCrossentropy(
-            name='loss_tracker_val_disc')
+            name='loss_tracker_val_disc', from_logits=True)
         # .. and metrics
         metric_tracker_train_gen = MeanAbsoluteError(
             name='metric_tracker_train_gen')
