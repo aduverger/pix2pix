@@ -50,9 +50,9 @@ def plot_last_n_epochs(ax, history, n=50, set_name='train', show_label=True):
         twin.legend([],[], frameon=False)
 
     # X-Y LABELS
-    ax.set_xlabel('N epochs', loc='right')
-    ax.set_ylabel('Loss', loc='top')
-    twin.set_ylabel(ylabel='MAE', loc='top')
+    ax.set_xlabel('N epochs')
+    ax.set_ylabel('Loss')
+    twin.set_ylabel(ylabel='MAE')
     ax.set(xlim=(start_epoch, max(n, last_epoch)), ylim=(0, loss_max))
     twin.set(xlim=(start_epoch, max(n, last_epoch)), ylim=(0, mae_max))
     ax.tick_params(left=False, bottom=False)
