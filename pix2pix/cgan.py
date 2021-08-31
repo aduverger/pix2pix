@@ -11,13 +11,14 @@ from tensorflow.python.ops.gen_math_ops import Mean
 from pix2pix.data import *
 from pix2pix.models import *
 from tensorflow.keras.optimizers import Adam
+from tensorflow import concat
 
 """
 Main class for pix2pix project. Implement a full CGAN model that can be fit.
 """
 
 class CGAN:
-    def __init__(self, generator, discriminator=None):
+    def __init__(self, generator, discriminator=None, cgan_mode=False):
         self.generator = generator
         self.discriminator = discriminator
         self.gen_optimizer = Adam(1e-4)
@@ -26,6 +27,7 @@ class CGAN:
         self.l1 = L1Loss()
         self.random_sample = True
         self.disc_threshold = 0
+        self.cgan_mode = cgan_mode
 
     #TODO add the possibility to add different metrics
     def compile(self, gen_optimizer, disc_optimizer, gen_metrics, disc_metrics):
@@ -44,13 +46,13 @@ class CGAN:
         loss.update_state(ones_like(real_output), real_output)
         loss.update_state(zeros_like(fake_output), fake_output)
 
-        
+
     def update_discriminator_accuracy(self, acc, real_output, fake_output):
         real_proba = [0 if x <= self.disc_threshold else 1 for x in real_output]
         fake_proba = [0 if x <= self.disc_threshold else 1 for x in fake_output]
         acc.update_state(ones_like(real_output), np.array(real_proba))
         acc.update_state(zeros_like(fake_output), np.array(fake_proba))
-        
+
 
     def generator_loss(self, fake_images=None, real_images=None, fake_output=None, l1_lambda=100, loss_strategy='both'):
         #TODO with try/except
@@ -73,14 +75,14 @@ class CGAN:
     def update_generator_cross(self, cross, fake_output):
         cross.update_state(ones_like(fake_output), fake_output)
 
-        
-    def train_generator_step(self, paint, real_images,
+
+    def train_generator_step(self, paint_images, real_images,
                              loss_tracker_train_gen, loss_tracker_train_disc,
-                             metric_tracker_train_gen, metric_tracker_train_disc,
-                             l1_lambda):
+                             metric_tracker_train_gen,
+                             metric_tracker_train_disc, l1_lambda):
         # Forward propagation
         with GradientTape() as gen_tape:
-            fake_images = self.generator(paint, training=True)
+            fake_images = self.generator(paint_images, training=True)
             real_output = self.discriminator(real_images, training=True)
             fake_output = self.discriminator(fake_images, training=True)
             gen_loss = self.generator_loss(fake_images=fake_images, real_images=real_images,
@@ -94,19 +96,25 @@ class CGAN:
         # For discriminators
         self.update_discriminator_loss(loss_tracker_train_disc, real_output, fake_output)
         self.update_discriminator_accuracy(metric_tracker_train_disc, real_output, fake_output)
-            # For generators
+        # For generators
         self.update_generator_cross(loss_tracker_train_gen, fake_output)
         self.update_generator_mae(metric_tracker_train_gen, fake_images, real_images)
 
 
-    def train_discriminator_step(self, paint, real_images,
+    def train_discriminator_step(self, paint_images, real_images,
                                  loss_tracker_train_gen, loss_tracker_train_disc,
                                  metric_tracker_train_gen, metric_tracker_train_disc):
         # Forward propagation
         with GradientTape() as disc_tape:
-            fake_images = self.generator(paint, training=True)
-            real_output = self.discriminator(real_images, training=True)
-            fake_output = self.discriminator(fake_images, training=True)
+            fake_images = self.generator(paint_images, training=True)
+            if self.cgan_mode: # in cgan mode the paint images are also used as input of the discriminator
+                disc_real_input = concat([paint_images, real_images], axis=3) # stack images on the column axis, i.e. the same we use to split them beforehand
+                disc_fake_input = concat([paint_images, fake_images], axis=3)
+            else:
+                disc_real_input = real_images
+                disc_fake_input = fake_images
+            real_output = self.discriminator(disc_real_input, training=True)
+            fake_output = self.discriminator(disc_fake_input, training=True)
             disc_loss = self.discriminator_loss(real_output, fake_output)
 
         # Compute gradients and apply to weights
@@ -117,20 +125,26 @@ class CGAN:
         # For discriminators
         self.update_discriminator_loss(loss_tracker_train_disc, real_output, fake_output)
         self.update_discriminator_accuracy(metric_tracker_train_disc, real_output, fake_output)
-            # For generators
+        # For generators
         self.update_generator_cross(loss_tracker_train_gen, fake_output)
         self.update_generator_mae(metric_tracker_train_gen, fake_images, real_images)
 
 
-    def train_gan_step(self, paint, real_images,
+    def train_gan_step(self, paint_images, real_images,
                        loss_tracker_train_gen, loss_tracker_train_disc,
                        metric_tracker_train_gen, metric_tracker_train_disc,
                        l1_lambda):
         # Forward propagation
         with GradientTape() as gen_tape, GradientTape() as disc_tape:
-            fake_images = self.generator(paint, training=True)
-            real_output = self.discriminator(real_images, training=True)
-            fake_output = self.discriminator(fake_images, training=True)
+            fake_images = self.generator(paint_images, training=True)
+            if self.cgan_mode:  # in cgan mode the paint images are also used as input of the discriminator
+                disc_real_input = concat([paint_images, real_images], axis=3)  # stack images on the column axis, i.e. the same we use to split them beforehand
+                disc_fake_input = concat([paint_images, fake_images], axis=3)
+            else:
+                disc_real_input = real_images
+                disc_fake_input = fake_images
+            real_output = self.discriminator(disc_real_input, training=True)
+            fake_output = self.discriminator(disc_fake_input, training=True)
             disc_loss = self.discriminator_loss(real_output, fake_output)
             gen_loss = self.generator_loss(fake_images=fake_images, real_images=real_images,
                                            fake_output=fake_output, l1_lambda=l1_lambda, loss_strategy='both')
@@ -147,16 +161,16 @@ class CGAN:
         # For discriminators
         self.update_discriminator_loss(loss_tracker_train_disc, real_output, fake_output)
         self.update_discriminator_accuracy(metric_tracker_train_disc, real_output, fake_output)
-            # For generators
+        # For generators
         self.update_generator_cross(loss_tracker_train_gen, fake_output)
-        self.update_generator_mae(metric_tracker_train_gen, fake_images, real_images)    
-    
-    
-    def val_generator_step(self, paint, real_images,
+        self.update_generator_mae(metric_tracker_train_gen, fake_images, real_images)
+
+
+    def val_generator_step(self, paint_images, real_images,
                            loss_tracker_val_gen, loss_tracker_val_disc,
                            metric_tracker_val_gen, metric_tracker_val_disc):
         # Forward propagation
-        fake_images = self.generator(paint, training=True)
+        fake_images = self.generator(paint_images, training=True)
         real_output = self.discriminator(real_images, training=True)
         fake_output = self.discriminator(fake_images, training=True)
 
@@ -164,41 +178,48 @@ class CGAN:
         # For discriminators
         self.update_discriminator_loss(loss_tracker_val_disc, real_output, fake_output)
         self.update_discriminator_accuracy(metric_tracker_val_disc, real_output, fake_output)
-            # For generators
+        # For generators
         self.update_generator_cross(loss_tracker_val_gen, fake_output)
         self.update_generator_mae(metric_tracker_val_gen, fake_images, real_images)
 
 
-    def val_discriminator_step(self, paint, real_images,
+    def val_discriminator_step(self, paint_images, real_images,
                                loss_tracker_val_gen, loss_tracker_val_disc,
                                metric_tracker_val_gen, metric_tracker_val_disc):
         # Forward propagation
-        fake_images = self.generator(paint, training=True)
-        real_output = self.discriminator(real_images, training=True)
-        fake_output = self.discriminator(fake_images, training=True)
+        fake_images = self.generator(paint_images, training=True)
+        if self.cgan_mode:  # in cgan mode the paint images are also used as input of the discriminator
+            disc_real_input = concat([paint_images, real_images], axis=3)  # stack images on the column axis, i.e. the same we use to split them beforehand
+            disc_fake_input = concat([paint_images, fake_images], axis=3)
+        else:
+            disc_real_input = real_images
+            disc_fake_input = fake_images
 
         # Track loss and metrics
         # For discriminators
         self.update_discriminator_loss(loss_tracker_val_disc, real_output, fake_output)
         self.update_discriminator_accuracy(metric_tracker_val_disc, real_output, fake_output)
-            # For generators
+        # For generators
         self.update_generator_cross(loss_tracker_val_gen, fake_output)
         self.update_generator_mae(metric_tracker_val_gen, fake_images, real_images)
 
 
-    def val_gan_step(self, paint, real_images,
-                     loss_tracker_val_gen, loss_tracker_val_disc,
-                     metric_tracker_val_gen, metric_tracker_val_disc):
+    def val_gan_step(self, paint_images, real_images, loss_tracker_val_gen,
+                     loss_tracker_val_disc, metric_tracker_val_gen,
+                     metric_tracker_val_disc):
         # Forward propagation
-        fake_images = self.generator(paint, training=True)
-        real_output = self.discriminator(real_images, training=True)
-        fake_output = self.discriminator(fake_images, training=True)
-
+        fake_images = self.generator(paint_images, training=True)
+        if self.cgan_mode:  # in cgan mode the paint images are also used as input of the discriminator
+            disc_real_input = concat([paint_images, real_images], axis=3)  # stack images on the column axis, i.e. the same we use to split them beforehand
+            disc_fake_input = concat([paint_images, fake_images], axis=3)
+        else:
+            disc_real_input = real_images
+            disc_fake_input = fake_images
         # Track loss and metrics
         # For discriminators
         self.update_discriminator_loss(loss_tracker_val_disc, real_output, fake_output)
         self.update_discriminator_accuracy(metric_tracker_val_disc, real_output, fake_output)
-            # For generators
+        # For generators
         self.update_generator_cross(loss_tracker_val_gen, fake_output)
         self.update_generator_mae(metric_tracker_val_gen, fake_images, real_images)
 
@@ -300,7 +321,7 @@ class CGAN:
         ax7.axis('off')
         fig.savefig('image_at_epoch_{:04d}.png'.format(epoch))
         plt.show()
-    
+
 
     def display_trackers(self, start_training, start_epoch, epoch, epoch_gen, epoch_disc, epochs, res_trackers_dict):
         if epoch < epoch_gen:
@@ -328,7 +349,7 @@ class CGAN:
             display_str += f'''
             Train set : Generator GAN loss = {res_trackers_dict['loss_tracker_train_gen']:0.2f}        Generator MAE = {res_trackers_dict['metric_tracker_train_gen']:0.2f}
                             Discriminator loss = {res_trackers_dict['loss_tracker_train_disc']:0.2f}         Discriminator accuracy = {res_trackers_dict['metric_tracker_train_disc']:0.2f}
-            
+
             Val set :   Generator GAN loss = {res_trackers_dict['loss_tracker_val_gen']:0.2f}        Generator MAE = {res_trackers_dict['metric_tracker_val_gen']:0.2f}
                             Discriminator loss = {res_trackers_dict['loss_tracker_val_disc']:0.2f}         Discriminator accuracy = {res_trackers_dict['metric_tracker_val_disc']:0.2f}
             '''
@@ -458,11 +479,14 @@ if __name__ == "__main__":
                                    batch_size=8)
     generator = make_dummy_generator()
     discriminator = make_dummy_discriminator()
-    model = CGAN(generator, discriminator)
+    cgan = CGAN(generator, discriminator, cgan_mode=True)
 
-    #model.generate_and_save_images_from(generator, 10, train, val,None)
+    paint_batch, real_batch = next(iter(train))
+    cgan.train_gan_step(paint_batch, real_batch, None, None, None, None, 100)
 
-    model.fit(train_ds=train,
-              val_ds=val,
-              epochs=10, epoch_gen=1, epoch_disc=1,
-              l1_lambda=100)
+    #cgan.generate_and_save_images_from(generator, 10, train, val,None)
+
+    # cgan.fit(train_ds=train,
+    #           val_ds=val,
+    #           epochs=10, epoch_gen=1, epoch_disc=1,
+    #           l1_lambda=100)
