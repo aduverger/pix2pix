@@ -489,15 +489,15 @@ if __name__ == "__main__":
                                    dataset='facades',
                                    batch_size=8)
     generator = make_dummy_generator()
-    discriminator = make_dummy_discriminator()
+    discriminator = make_dummy_discriminator(cgan_mode=True)
     cgan = CGAN(generator, discriminator, cgan_mode=True)
 
-    paint_batch, real_batch = next(iter(train))
-    cgan.train_gan_step(paint_batch, real_batch, None, None, None, None, 100)
+    # paint_batch, real_batch = next(iter(train))
+    # cgan.train_gan_step(paint_batch, real_batch, None, None, None, None, 100)
 
     #cgan.generate_and_save_images_from(generator, 10, train, val,None)
 
-    # cgan.fit(train_ds=train,
-    #           val_ds=val,
-    #           epochs=10, epoch_gen=1, epoch_disc=1,
-    #           l1_lambda=100)
+    cgan.fit(train_ds=train,
+              val_ds=val,
+              epochs=10, epoch_gen=1, epoch_disc=1,
+              l1_lambda=100)
