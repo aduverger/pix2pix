@@ -188,7 +188,8 @@ def block_1_conv2D_transpose(filters,
 
 
 def make_dummy_generator():
-    inputs = layers.Input(shape=(256, 256, 3))
+
+    inputs = Input(shape=(256, 256, 3))
 
     # Entry block
     x = block_1_conv2D(64, 4, 1)(inputs)
@@ -202,10 +203,13 @@ def make_dummy_generator():
     return model
 
 
-def make_dummy_discriminator():
+def make_dummy_discriminator(cgan_mode=False):
     model = Sequential()
 
-    model.add(layers.Input(shape=(256, 256, 3)))
+    if cgan_mode:
+        model.add(layers.Input(shape=(256, 256, 6)))
+    else:
+        model.add(layers.Input(shape=(256, 256, 3)))
 
     model.add(
         layers.Conv2D(64,
