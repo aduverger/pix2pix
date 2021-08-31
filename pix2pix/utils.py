@@ -27,14 +27,16 @@ def plot_last_n_epochs(ax, history, n=50, set_name='train', show_label=True):
     twin.lines[0].set_linestyle("--")
 
     # GENERATOR TRAINING AREA
-    if epoch_gen != 0 and epoch_gen > start_epoch:
-        ax.text((epoch_gen+start_epoch)/2, -0.05, 'Generator\ntraining', color='tab:blue', ha='center', va='top')
+    if epoch_gen != 0 and last_epoch > epoch_gen > start_epoch:
+        if not show_label:
+            ax.text((epoch_gen+start_epoch)/2, -0.1, 'Generator\ntraining', color='tab:blue', ha='center', va='top')
         ax.fill_between(np.arange(0, epoch_gen, 0.01), 0, 1,
                     color='tab:blue', alpha=0.05, transform=ax.get_xaxis_transform())
 
     # DISCRIMINATOR TRAINING AREA
-    if epoch_disc != 0 and epoch_disc > last_epoch:
-        ax.text(epoch_disc/2 + epoch_gen, -0.05, 'Discriminator\ntraining', color='tab:red', ha='center', va='top')
+    if epoch_disc != 0 and last_epoch > epoch_disc > start_epoch:
+        if not show_label:
+            ax.text(epoch_disc/2 + epoch_gen, -0.1, 'Discriminator\ntraining', color='tab:red', ha='center', va='top')
         ax.fill_between(np.arange(epoch_gen, epoch_gen+epoch_disc, 0.01), 0, 1,
                     color='tab:red', alpha=0.05, transform=ax.get_xaxis_transform())
 
@@ -50,7 +52,8 @@ def plot_last_n_epochs(ax, history, n=50, set_name='train', show_label=True):
         twin.legend([],[], frameon=False)
 
     # X-Y LABELS
-    ax.set_xlabel('N epochs')
+    if show_label:
+        ax.set_xlabel('N epochs')
     ax.set_ylabel('Loss')
     twin.set_ylabel(ylabel='MAE')
     ax.set(xlim=(start_epoch, max(n, last_epoch)), ylim=(0, loss_max))
