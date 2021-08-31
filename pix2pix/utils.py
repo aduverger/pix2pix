@@ -12,14 +12,14 @@ def plot_last_n_epochs(ax, history, n=50, set_name='train', show_label=True):
     last_epoch = max(n, history['epoch_index'][-1])
     start_epoch = max(0, last_epoch - n)
     loss_max = max(
-        max(history['train']['gen_loss']),
-        max(history['train']['disc_loss']),
-        max(history['val']['gen_loss']),
-        max(history['val']['disc_loss'])
+        max(history['train']['gen_loss'][start_epoch:]),
+        max(history['train']['disc_loss'][start_epoch:]),
+        max(history['val']['gen_loss'][start_epoch:]),
+        max(history['val']['disc_loss'][start_epoch:])
         )
     mae_max = max(
-        max([mae * l1_lambda for mae in history['train']['gen_mae']]),
-        max([mae * l1_lambda for mae in history['val']['gen_mae']])
+        max([mae * l1_lambda for mae in history['train']['gen_mae'][start_epoch:]]),
+        max([mae * l1_lambda for mae in history['val']['gen_mae'][start_epoch:]])
         )
     sns.lineplot(x=history['epoch_index'], y=history[set_name]['gen_loss'], ax=ax, color='tab:blue', label='Generator loss')
     sns.lineplot(x=history['epoch_index'], y=history[set_name]['disc_loss'], ax=ax, color='tab:red', label='Discriminator loss')
