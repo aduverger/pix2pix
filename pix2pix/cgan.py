@@ -10,6 +10,7 @@ import numpy as np
 from tensorflow.python.ops.gen_math_ops import Mean
 from pix2pix.data import *
 from pix2pix.models import *
+from pix2pix.utils import *
 from tensorflow.keras.optimizers import Adam
 
 """
@@ -249,7 +250,7 @@ class CGAN:
         ax.axis('off')
 
 
-    def generate_and_save_images(self, model, epoch, train_ds, val_ds, trackers_to_display):
+    def generate_and_save_images(self, model, epoch, train_ds, val_ds, trackers_to_display, display_tracker=True, display_plot=True):
         display.clear_output(wait=True)
         #TODO: Use next_iter to avoid iterating upon the whole datasets ?
         train_list = [(paint, real) for paint, real in iter(train_ds)]
@@ -273,16 +274,18 @@ class CGAN:
             val_list[index_batch_val][0][index_val], axis=0),
                                training=False)
 
-        fig = plt.figure(constrained_layout=True, figsize=(14,7))
+        fig = plt.figure(constrained_layout=True, figsize=(18,9))
 
-        gs = fig.add_gridspec(5, 3)
+        gs = fig.add_gridspec(5, 6)
         ax1 = fig.add_subplot(gs[0:2, 0])
         ax2 = fig.add_subplot(gs[0:2, 1])
         ax3 = fig.add_subplot(gs[0:2, 2])
         ax4 = fig.add_subplot(gs[2:4, 0])
         ax5 = fig.add_subplot(gs[2:4, 1])
         ax6 = fig.add_subplot(gs[2:4, 2])
-        ax7 = fig.add_subplot(gs[4, :])
+        ax7 = fig.add_subplot(gs[4, :3])
+        ax8 = fig.add_subplot(gs[0:2, 3:])
+        ax9 = fig.add_subplot(gs[2:4, 3:])
 
         self.display_image(ax1, train_list[index_batch_train][0][index_train])
         ax1.set_title(label="Train sample \n Input")
@@ -298,6 +301,10 @@ class CGAN:
         ax6.set_title(label="Ground truth")
         ax7.text(0, 1, trackers_to_display, ha='left', size='medium')
         ax7.axis('off')
+        
+        plot_last_n_epochs(ax8, self.history, set_name='train', show_label=False)
+        plot_last_n_epochs(ax9, self.history, set_name='val', show_label=True)
+        
         fig.savefig('image_at_epoch_{:04d}.png'.format(epoch))
         plt.show()
     
@@ -455,7 +462,7 @@ class CGAN:
 if __name__ == "__main__":
     train, val, test = get_dataset(host='local',
                                    dataset='facades',
-                                   batch_size=8)
+                                   batch_size=32)
     generator = make_dummy_generator()
     discriminator = make_dummy_discriminator()
     model = CGAN(generator, discriminator)
