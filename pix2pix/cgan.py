@@ -108,8 +108,8 @@ class CGAN:
         with GradientTape() as disc_tape:
             fake_images = self.generator(paint_images, training=True)
             if self.cgan_mode: # in cgan mode the paint images are also used as input of the discriminator
-                disc_real_input = concat([paint_images, real_images], axis=2) # stack images on the column axis, i.e. the same we use to split them beforehand
-                disc_fake_input = concat([paint_images, fake_images], axis=2)
+                disc_real_input = concat([paint_images, real_images], axis=3) # stack images on the column axis, i.e. the same we use to split them beforehand
+                disc_fake_input = concat([paint_images, fake_images], axis=3)
             else:
                 disc_real_input = real_images
                 disc_fake_input = fake_images
@@ -138,13 +138,11 @@ class CGAN:
         with GradientTape() as gen_tape, GradientTape() as disc_tape:
             fake_images = self.generator(paint_images, training=True)
             if self.cgan_mode:  # in cgan mode the paint images are also used as input of the discriminator
-                disc_real_input = concat([paint_images, real_images], axis=2)  # stack images on the column axis, i.e. the same we use to split them beforehand
-                disc_fake_input = concat([paint_images, fake_images], axis=2)
+                disc_real_input = concat([paint_images, real_images], axis=3)  # stack images on the column axis, i.e. the same we use to split them beforehand
+                disc_fake_input = concat([paint_images, fake_images], axis=3)
             else:
                 disc_real_input = real_images
                 disc_fake_input = fake_images
-            print(f'Real shape : {disc_real_input.shape}')
-            print(f'Fake shape : {disc_fake_input.shape}')
             real_output = self.discriminator(disc_real_input, training=True)
             fake_output = self.discriminator(disc_fake_input, training=True)
             disc_loss = self.discriminator_loss(real_output, fake_output)
@@ -168,11 +166,11 @@ class CGAN:
         self.update_generator_mae(metric_tracker_train_gen, fake_images, real_images)
 
 
-    def val_generator_step(self, paint, real_images,
+    def val_generator_step(self, paint_images, real_images,
                            loss_tracker_val_gen, loss_tracker_val_disc,
                            metric_tracker_val_gen, metric_tracker_val_disc):
         # Forward propagation
-        fake_images = self.generator(paint, training=True)
+        fake_images = self.generator(paint_images, training=True)
         real_output = self.discriminator(real_images, training=True)
         fake_output = self.discriminator(fake_images, training=True)
 
@@ -185,13 +183,17 @@ class CGAN:
         self.update_generator_mae(metric_tracker_val_gen, fake_images, real_images)
 
 
-    def val_discriminator_step(self, paint, real_images,
+    def val_discriminator_step(self, paint_images, real_images,
                                loss_tracker_val_gen, loss_tracker_val_disc,
                                metric_tracker_val_gen, metric_tracker_val_disc):
         # Forward propagation
-        fake_images = self.generator(paint, training=True)
-        real_output = self.discriminator(real_images, training=True)
-        fake_output = self.discriminator(fake_images, training=True)
+        fake_images = self.generator(paint_images, training=True)
+        if self.cgan_mode:  # in cgan mode the paint images are also used as input of the discriminator
+            disc_real_input = concat([paint_images, real_images], axis=3)  # stack images on the column axis, i.e. the same we use to split them beforehand
+            disc_fake_input = concat([paint_images, fake_images], axis=3)
+        else:
+            disc_real_input = real_images
+            disc_fake_input = fake_images
 
         # Track loss and metrics
         # For discriminators
@@ -202,14 +204,17 @@ class CGAN:
         self.update_generator_mae(metric_tracker_val_gen, fake_images, real_images)
 
 
-    def val_gan_step(self, paint, real_images,
-                     loss_tracker_val_gen, loss_tracker_val_disc,
-                     metric_tracker_val_gen, metric_tracker_val_disc):
+    def val_gan_step(self, paint_images, real_images, loss_tracker_val_gen,
+                     loss_tracker_val_disc, metric_tracker_val_gen,
+                     metric_tracker_val_disc):
         # Forward propagation
-        fake_images = self.generator(paint, training=True)
-        real_output = self.discriminator(real_images, training=True)
-        fake_output = self.discriminator(fake_images, training=True)
-
+        fake_images = self.generator(paint_images, training=True)
+        if self.cgan_mode:  # in cgan mode the paint images are also used as input of the discriminator
+            disc_real_input = concat([paint_images, real_images], axis=3)  # stack images on the column axis, i.e. the same we use to split them beforehand
+            disc_fake_input = concat([paint_images, fake_images], axis=3)
+        else:
+            disc_real_input = real_images
+            disc_fake_input = fake_images
         # Track loss and metrics
         # For discriminators
         self.update_discriminator_loss(loss_tracker_val_disc, real_output, fake_output)
