@@ -11,7 +11,7 @@ from tensorflow.python.ops.gen_math_ops import Mean
 from pix2pix.data import *
 from pix2pix.models import *
 from tensorflow.keras.optimizers import Adam
-from tensorflow import stack
+from tensorflow import concat
 
 """
 Main class for pix2pix project. Implement a full CGAN model that can be fit.
@@ -108,8 +108,8 @@ class CGAN:
         with GradientTape() as disc_tape:
             fake_images = self.generator(paint_images, training=True)
             if self.cgan_mode: # in cgan mode the paint images are also used as input of the discriminator
-                disc_real_input = stack([paint_images, real_images], axis=2) # stack images on the column axis, i.e. the same we use to split them beforehand
-                disc_fake_input = stack([paint_images, fake_images], axis=2)
+                disc_real_input = concat([paint_images, real_images], axis=2) # stack images on the column axis, i.e. the same we use to split them beforehand
+                disc_fake_input = concat([paint_images, fake_images], axis=2)
             else:
                 disc_real_input = real_images
                 disc_fake_input = fake_images
@@ -138,11 +138,13 @@ class CGAN:
         with GradientTape() as gen_tape, GradientTape() as disc_tape:
             fake_images = self.generator(paint_images, training=True)
             if self.cgan_mode:  # in cgan mode the paint images are also used as input of the discriminator
-                disc_real_input = stack([paint_images, real_images], axis=2)  # stack images on the column axis, i.e. the same we use to split them beforehand
-                disc_fake_input = stack([paint_images, fake_images], axis=2)
+                disc_real_input = concat([paint_images, real_images], axis=2)  # stack images on the column axis, i.e. the same we use to split them beforehand
+                disc_fake_input = concat([paint_images, fake_images], axis=2)
             else:
                 disc_real_input = real_images
                 disc_fake_input = fake_images
+            print(f'Real shape : {disc_real_input.shape}')
+            print(f'Fake shape : {disc_fake_input.shape}')
             real_output = self.discriminator(disc_real_input, training=True)
             fake_output = self.discriminator(disc_fake_input, training=True)
             disc_loss = self.discriminator_loss(real_output, fake_output)
@@ -472,11 +474,14 @@ if __name__ == "__main__":
                                    batch_size=8)
     generator = make_dummy_generator()
     discriminator = make_dummy_discriminator()
-    model = CGAN(generator, discriminator)
+    cgan = CGAN(generator, discriminator, cgan_mode=True)
 
-    #model.generate_and_save_images_from(generator, 10, train, val,None)
+    paint_batch, real_batch = next(iter(train))
+    cgan.train_gan_step(paint_batch, real_batch, None, None, None, None, 100)
 
-    model.fit(train_ds=train,
-              val_ds=val,
-              epochs=10, epoch_gen=1, epoch_disc=1,
-              l1_lambda=100)
+    #cgan.generate_and_save_images_from(generator, 10, train, val,None)
+
+    # cgan.fit(train_ds=train,
+    #           val_ds=val,
+    #           epochs=10, epoch_gen=1, epoch_disc=1,
+    #           l1_lambda=100)
