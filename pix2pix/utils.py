@@ -9,7 +9,7 @@ def plot_last_n_epochs(ax, history, n=50, set_name='train', show_label=True):
     scaled_mae_list = [mae * l1_lambda for mae in history[set_name]['gen_mae']]
     epoch_gen = history['epoch_gen']
     epoch_disc = history['epoch_disc']
-    last_epoch = history['epoch_index'][-1]
+    last_epoch = max(n, history['epoch_index'][-1])
     start_epoch = max(0, last_epoch - n)
     loss_max = max(
         max(history['train']['gen_loss']),
@@ -56,8 +56,8 @@ def plot_last_n_epochs(ax, history, n=50, set_name='train', show_label=True):
         ax.set_xlabel('N epochs')
     ax.set_ylabel('Loss')
     twin.set_ylabel(ylabel='MAE')
-    ax.set(xlim=(start_epoch, max(n, last_epoch)), ylim=(0, loss_max))
-    twin.set(xlim=(start_epoch, max(n, last_epoch)), ylim=(0, mae_max))
+    ax.set(xlim=(start_epoch, last_epoch), ylim=(0, loss_max))
+    twin.set(xlim=(start_epoch, last_epoch), ylim=(0, mae_max))
     ax.tick_params(left=False, bottom=False)
     twin.tick_params(right=False)
 
