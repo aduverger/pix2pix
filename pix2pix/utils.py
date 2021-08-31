@@ -21,7 +21,7 @@ def plot_last_n_epochs(ax, history, n=50, set_name='train', show_label=True):
         max(history['train']['gen_mae']),
         max(history['val']['gen_mae'])
     )
-    sns.lineplot(x=history['epoch_index'], y=history[set_name]['gen_loss'], ax=ax, color='tab:blue', label='Generator loss')
+    ax = sns.lineplot(x=history['epoch_index'], y=history[set_name]['gen_loss'], ax=ax, color='tab:blue', label='Generator loss')
     sns.lineplot(x=history['epoch_index'], y=history[set_name]['disc_loss'], ax=ax, color='tab:red', label='Discriminator loss')
     sns.lineplot(x=history['epoch_index'], y=scaled_mae_list, ax=twin, color='tab:cyan', label='Generator MAE * λ')
     twin.lines[0].set_linestyle("--")
