@@ -12,6 +12,7 @@ def plot_last_n_epochs(ax=None, history=None, n=50, set_name='train', show_label
     last_epoch = max(n, history['epoch_index'][-1])
     start_epoch = max(0, last_epoch - n)
     loss_max = max(
+        1,
         max(history['train']['gen_loss'][start_epoch:]),
         max(history['train']['disc_loss'][start_epoch:]),
         max(history['val']['gen_loss'][start_epoch:]),
