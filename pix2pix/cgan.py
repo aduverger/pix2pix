@@ -450,13 +450,14 @@ class CGAN:
                 tracker.result().numpy() for tracker in trackers_list
             ]
             # Then create a dict with trackers' names as keys and trackers' results as values
-            res_trackers_dict = dict(zip(trackers_name_list,
-                                         res_trackers_list))
+            res_trackers_dict = dict(zip(trackers_name_list, res_trackers_list))
                 # If epoch < epoch_gen, generator's loss is MAE and not binary-crossentropy.
                 # Plus, disc loss/acc are set to -1 for plotting reasons
             if epoch < epoch_gen:
-                res_trackers_dict['loss_tracker_train_gen'] = l1_lambda * metric_tracker_train_gen.result().numpy()
-                res_trackers_dict['loss_tracker_val_gen'] = l1_lambda * metric_tracker_val_gen.result().numpy()
+                res_trackers_dict['loss_tracker_train_gen'] = \
+                                        l1_lambda * metric_tracker_train_gen.result().numpy()
+                res_trackers_dict['loss_tracker_val_gen'] = \
+                                        l1_lambda * metric_tracker_val_gen.result().numpy()
                 res_trackers_dict['loss_tracker_train_disc'] = -1
                 res_trackers_dict['loss_tracker_val_disc'] = -1
                 res_trackers_dict['metric_tracker_train_disc'] = -1
@@ -468,7 +469,6 @@ class CGAN:
                 epochs, res_trackers_dict)
             self.generate_and_save_images(self.generator, epoch,
                                           train_ds, val_ds, trackers_to_display)
-
 
 
 
