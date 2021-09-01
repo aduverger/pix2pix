@@ -41,7 +41,7 @@ def plot_last_n_epochs(ax=None, history=None, n=50, set_name='train', show_label
                     color='tab:blue', alpha=0.05, transform=ax.get_xaxis_transform())
 
     # DISCRIMINATOR TRAINING AREA
-    if epoch_disc != 0 and last_epoch > epoch_gen + epoch_disc > start_epoch:
+    if epoch_disc != 0 and last_epoch > epoch_disc + epoch_gen > start_epoch:
         if not show_label:
             ax.text(epoch_disc/2 + epoch_gen, -0.2, 'Discriminator\ntraining', color='tab:red', ha='center', va='top')
         ax.fill_between(np.arange(epoch_gen, epoch_gen+epoch_disc, 0.01), 0, 1,
