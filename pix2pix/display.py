@@ -102,14 +102,14 @@ def generate_and_save_images(history, model, epoch, train_ds, val_ds,
         ax7.axis('off')
         
     if display_plots:
-        plot_last_n_epochs(ax8, history, set_name='train', show_label=False)
-        plot_last_n_epochs(ax9, history, set_name='val', show_label=True)
+        plot_last_n_epochs(ax8, history, n=epochs_to_display, set_name='train', show_label=False)
+        plot_last_n_epochs(ax9, history, n=epochs_to_display, set_name='val', show_label=True)
 
     fig.savefig('image_at_epoch_{:04d}.png'.format(epoch))
     plt.show()
 
 
-def plot_last_n_epochs(ax=None, history=None, n=epochs_to_display, set_name='train', show_label=True):
+def plot_last_n_epochs(ax=None, history=None, n=50, set_name='train', show_label=True):
     twin = ax.twinx()
     l1_lambda = history['l1_lambda'][-1]
     scaled_mae_list = [mae * l1_lambda for mae in history[set_name]['gen_mae']]
