@@ -454,10 +454,8 @@ class CGAN:
                 # If epoch < epoch_gen, generator's loss is MAE and not binary-crossentropy.
                 # Plus, disc loss/acc are set to -1 for plotting reasons
             if epoch < epoch_gen:
-                res_trackers_dict['loss_tracker_train_gen'] = \
-                                        l1_lambda * metric_tracker_train_gen.result().numpy()
-                res_trackers_dict['loss_tracker_val_gen'] = \
-                                        l1_lambda * metric_tracker_val_gen.result().numpy()
+                res_trackers_dict['loss_tracker_train_gen'] = -1
+                res_trackers_dict['loss_tracker_val_gen'] = -1
                 res_trackers_dict['loss_tracker_train_disc'] = -1
                 res_trackers_dict['loss_tracker_val_disc'] = -1
                 res_trackers_dict['metric_tracker_train_disc'] = -1

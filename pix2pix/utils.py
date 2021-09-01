@@ -22,7 +22,7 @@ def plot_last_n_epochs(ax=None, history=None, n=50, set_name='train', show_label
         max([mae * l1_lambda for mae in history['val']['gen_mae'][start_epoch:]])
         )
     sns.lineplot(x=history['epoch_index'],
-                 y=history[set_name]['gen_mae'],
+                 y=history[set_name]['gen_loss'],
                  ax=ax, color='tab:blue', label='Generator GAN loss')
     sns.lineplot(x=history['epoch_index'],
                  y=history[set_name]['disc_loss'],
