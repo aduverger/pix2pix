@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-def plot_last_n_epochs(ax=None, history=None, n=50, set_name='train', epoch_gen=0, show_label=True):
+def plot_last_n_epochs(ax=None, history=None, n=50, set_name='train', show_label=True):
     twin = ax.twinx()
     l1_lambda = history['l1_lambda']
     scaled_mae_list = [mae * l1_lambda for mae in history[set_name]['gen_mae']]
@@ -22,8 +22,8 @@ def plot_last_n_epochs(ax=None, history=None, n=50, set_name='train', epoch_gen=
         max([mae * l1_lambda for mae in history['val']['gen_mae'][start_epoch:]])
         )
     sns.lineplot(x=history['epoch_index'],
-                 y=history[set_name]['gen_mae'][:epoch_gen] + history[set_name]['gen_loss'][epoch_gen:],
-                 ax=ax, color='tab:blue', label='Generator loss')
+                 y=history[set_name]['gen_mae'],
+                 ax=ax, color='tab:blue', label='Generator GAN loss')
     sns.lineplot(x=history['epoch_index'],
                  y=history[set_name]['disc_loss'],
                  ax=ax, color='tab:red', label='Discriminator loss')
@@ -98,5 +98,5 @@ if __name__ == "__main__":
             }
         }
     fig, ax = plt.sublots(1,1)
-    ax, twin = plot_last_n_epochs(ax, history, n=50, epoch_gen=20)
+    ax, twin = plot_last_n_epochs(ax, history, n=50)
     plt.show()
