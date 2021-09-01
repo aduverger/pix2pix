@@ -284,7 +284,7 @@ class CGAN:
             val_list[index_batch_val][0][index_val], axis=0),
                                training=False)
 
-        fig = plt.figure(constrained_layout=True, figsize=(18,9))
+        fig = plt.figure(constrained_layout=True, figsize=(18,10))
 
         gs = fig.add_gridspec(5, 6)
         ax1 = fig.add_subplot(gs[0:2, 0])
