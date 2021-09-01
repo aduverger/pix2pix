@@ -145,7 +145,7 @@ class CGAN:
         with GradientTape() as gen_tape, GradientTape() as disc_tape:
             fake_images = self.generator(paint_images, training=True)
             if self.cgan_mode:  # in cgan mode the paint images are also used as input of the discriminator
-                disc_real_input = concat([paint_images, real_images], axis=3)  # stack images on the column axis, i.e. the same we use to split them beforehand
+                disc_real_input = concat([paint_images, real_images], axis=3)
                 disc_fake_input = concat([paint_images, fake_images], axis=3)
             else:
                 disc_real_input = real_images
