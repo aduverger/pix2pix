@@ -45,8 +45,9 @@ def display_image(ax, sample_tensor):
     ax.axis('off')
 
 
-def generate_and_save_images(history, model, epoch, train_ds, val_ds, trackers_to_display,
-                             random_sample=True, display_tracker=True, display_plot=True):
+def generate_and_save_images(history, model, epoch, train_ds, val_ds,
+                             trackers_to_display, epochs_to_display=50,
+                             random_sample=True, display_trackers=True, display_plots=True):
     display.clear_output(wait=True)
     #TODO: Use next_iter to avoid iterating upon the whole datasets ?
     train_list = [(paint, real) for paint, real in iter(train_ds)]
@@ -95,17 +96,20 @@ def generate_and_save_images(history, model, epoch, train_ds, val_ds, trackers_t
     ax5.set_title(label="Output")
     display_image(ax6, val_list[index_batch_val][1][index_val])
     ax6.set_title(label="Ground truth")
-    ax7.text(0, 1, trackers_to_display, ha='left', size='medium')
-    ax7.axis('off')
-
-    plot_last_n_epochs(ax8, history, set_name='train', show_label=False)
-    plot_last_n_epochs(ax9, history, set_name='val', show_label=True)
+    
+    if display_trackers:
+        ax7.text(0, 1, trackers_to_display, ha='left', size='medium')
+        ax7.axis('off')
+        
+    if display_plots:
+        plot_last_n_epochs(ax8, history, set_name='train', show_label=False)
+        plot_last_n_epochs(ax9, history, set_name='val', show_label=True)
 
     fig.savefig('image_at_epoch_{:04d}.png'.format(epoch))
     plt.show()
 
 
-def plot_last_n_epochs(ax=None, history=None, n=50, set_name='train', show_label=True):
+def plot_last_n_epochs(ax=None, history=None, n=epochs_to_display, set_name='train', show_label=True):
     twin = ax.twinx()
     l1_lambda = history['l1_lambda'][-1]
     scaled_mae_list = [mae * l1_lambda for mae in history[set_name]['gen_mae']]

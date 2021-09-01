@@ -432,6 +432,11 @@ class CGAN:
                 epochs, res_trackers_dict)
             generate_and_save_images(self.history, self.generator, epoch,
                                     train_ds, val_ds, trackers_to_display)
+        
+        # Generate one last display by plotting every epochs
+        generate_and_save_images(self.history, self.generator, epoch,
+                                 train_ds, val_ds, trackers_to_display,
+                                 epochs_to_display=epochs)
 
 
 
