@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from numpy.lib.npyio import save
 import seaborn as sns
 import random
 import time
@@ -47,7 +48,8 @@ def display_image(ax, sample_tensor):
 
 def generate_and_save_images(history, model, epoch, train_ds, val_ds,
                              trackers_to_display, epochs_to_display=50,
-                             random_sample=True, display_trackers=True, display_plots=True):
+                             random_sample=True, display_trackers=True,
+                             display_plots=True):
     display.clear_output(wait=True)
     #TODO: Use next_iter to avoid iterating upon the whole datasets ?
     train_list = [(paint, real) for paint, real in iter(train_ds)]
@@ -104,7 +106,7 @@ def generate_and_save_images(history, model, epoch, train_ds, val_ds,
     if display_plots:
         plot_last_n_epochs(ax8, history, n=epochs_to_display, set_name='train', show_label=False)
         plot_last_n_epochs(ax9, history, n=epochs_to_display, set_name='val', show_label=True)
-
+    
     fig.savefig('image_at_epoch_{:04d}.png'.format(epoch))
     plt.show()
 

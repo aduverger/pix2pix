@@ -290,9 +290,10 @@ class CGAN:
                     like noise and dropout.
             epochs (int):
                     Number of epochs to train the model. An epoch is an iteration
-                    over the entire x and y data provided. Note that in conjunction
+                    over the entire data provided. Note that in conjunction
                     with initial_epoch, epochs is to be understood as "final epoch".
-                    The model is trained for the number iterations in range(initial_epoch, epochs)
+                    The model is not trained for a number of iterations given by epochs,
+                    but merely until the epoch of index epochs is reached.
             initial_epoch (int, optional):
                     Epoch at which to start training (useful for resuming a
                     previous training run). Defaults to 0
@@ -431,12 +432,14 @@ class CGAN:
                 start_training, start_epoch, epoch, epoch_gen, epoch_disc,
                 epochs, res_trackers_dict)
             generate_and_save_images(self.history, self.generator, epoch,
-                                    train_ds, val_ds, trackers_to_display)
+                                    train_ds, val_ds, trackers_to_display,
+                                    random_sample=self.random_sample)
         
         # Generate one last display by plotting every epochs
         generate_and_save_images(self.history, self.generator, epoch,
                                  train_ds, val_ds, trackers_to_display,
-                                 epochs_to_display=epochs)
+                                 epochs_to_display=epochs,
+                                 random_sample=self.random_sample)
 
 
 
