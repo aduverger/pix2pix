@@ -69,7 +69,12 @@ def plot_last_n_epochs(ax=None, history=None, n=50, set_name='train', show_label
     twin.tick_params(right=False)
 
     # TITLE
-    ax.set_title(f'{set_name} set')
+    ax.set_title(f'{set_name.capitalize()} set',
+                  fontdict={
+                      'fontsize': 13,
+                      'fontweight': 7,
+                      'color': 'black'
+                  })
     sns.despine(left=True, bottom=True)
     ax.grid(axis='both', ls='--', alpha=0.5)    
     
