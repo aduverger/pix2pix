@@ -85,7 +85,7 @@ async def create_upload_file(file: UploadFile = File(...)):
     expanded = tf.expand_dims((decoded_image / 127.5) - 1, axis=0)
 
     # load the model
-    new_model = tf.keras.models.load_model('gen_pix2pix_400_model_save.h5')
+    new_model = tf.keras.models.load_model('generator.h5')
 
     # make a prediction
     result = new_model(expanded, training=False)

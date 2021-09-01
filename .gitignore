@@ -1,4 +1,5 @@
 gen_pix2pix_400_model_save.h5
+generator.h5
 *.egg-info
 .coverage
 .ipynb_checkpoints
