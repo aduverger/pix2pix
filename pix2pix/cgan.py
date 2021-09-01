@@ -56,7 +56,6 @@ class CGAN:
         fake_output_array = fake_output.numpy()
         fake_output_array = np.vectorize(lambda x: 0 if x < self.disc_threshold else 1)(fake_output_array)
 
-        print(real_output_array)
         #real_proba = [0 if x <= self.disc_threshold else 1 for x in real_output]
         #fake_proba = [0 if x <= self.disc_threshold else 1 for x in fake_output]
         acc.update_state(ones_like(real_output), np.array(real_output_array))
@@ -524,7 +523,4 @@ if __name__ == "__main__":
     #           epochs=10, epoch_gen=1, epoch_disc=1,
     #           l1_lambda=100)
 
-    real_tf = convert_to_tensor(np.array([[1,2,3],[2,3,4]]))
-    fake_tf = convert_to_tensor(np.array([[1,2,3],[2,3,4]]))
-
-    cgan.update_discriminator_accuracy(None, real_tf, fake_tf)
+    # real_discriminator_accuracy(None, real_tf, fake_tf)
