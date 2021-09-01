@@ -188,7 +188,7 @@ def block_1_conv2D_transpose(filters,
 
 def make_dummy_generator():
 
-    inputs = Input(shape=(256, 256, 3))
+    inputs = layers.Input(shape=(256, 256, 3))
 
     # Entry block
     x = block_1_conv2D(64, 4, 1)(inputs)

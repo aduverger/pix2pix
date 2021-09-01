@@ -7,12 +7,13 @@ import matplotlib.pyplot as plt
 import random
 import time
 import numpy as np
+import math
 from tensorflow.python.ops.gen_math_ops import Mean
 from pix2pix.data import *
 from pix2pix.models import *
 from pix2pix.utils import *
 from tensorflow.keras.optimizers import Adam
-from tensorflow import concat
+from tensorflow import concat, convert_to_tensor
 
 """
 Main class for pix2pix project. Implement a full CGAN model that can be fit.
@@ -49,10 +50,16 @@ class CGAN:
 
 
     def update_discriminator_accuracy(self, acc, real_output, fake_output):
-        real_proba = [0 if x <= self.disc_threshold else 1 for x in real_output]
-        fake_proba = [0 if x <= self.disc_threshold else 1 for x in fake_output]
-        acc.update_state(ones_like(real_output), np.array(real_proba))
-        acc.update_state(zeros_like(fake_output), np.array(fake_proba))
+        real_output_array = real_output.numpy()
+        real_output_array = np.vectorize(lambda x: 0 if x < self.disc_threshold else 1)(real_output_array)
+
+        fake_output_array = fake_output.numpy()
+        fake_output_array = np.vectorize(lambda x: 0 if x < self.disc_threshold else 1)(fake_output_array)
+
+        #real_proba = [0 if x <= self.disc_threshold else 1 for x in real_output]
+        #fake_proba = [0 if x <= self.disc_threshold else 1 for x in fake_output]
+        acc.update_state(ones_like(real_output), np.array(real_output_array))
+        acc.update_state(zeros_like(fake_output), np.array(fake_output_array))
 
 
     def generator_loss(self, fake_images=None, real_images=None, fake_output=None, l1_lambda=100, loss_strategy='both'):
@@ -311,10 +318,10 @@ class CGAN:
         ax6.set_title(label="Ground truth")
         ax7.text(0, 1, trackers_to_display, ha='left', size='medium')
         ax7.axis('off')
-        
+
         plot_last_n_epochs(ax8, self.history, set_name='train', show_label=False)
         plot_last_n_epochs(ax9, self.history, set_name='val', show_label=True)
-        
+
         fig.savefig('image_at_epoch_{:04d}.png'.format(epoch))
         plt.show()
 
@@ -483,7 +490,9 @@ if __name__ == "__main__":
 
     #cgan.generate_and_save_images_from(generator, 10, train, val,None)
 
-    cgan.fit(train_ds=train,
-              val_ds=val,
-              epochs=10, epoch_gen=1, epoch_disc=1,
-              l1_lambda=100)
+    # cgan.fit(train_ds=train,
+    #           val_ds=val,
+    #           epochs=10, epoch_gen=1, epoch_disc=1,
+    #           l1_lambda=100)
+
+    # real_discriminator_accuracy(None, real_tf, fake_tf)
