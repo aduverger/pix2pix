@@ -25,6 +25,10 @@ class CGAN:
         self.history = self.initialize_history()
         self.l1 = L1Loss()
         self.random_sample = True
+        self.paint_train = None
+        self.paint_val = None
+        self.real_train = None
+        self.real_val = None
         self.disc_threshold = 0
         self.cgan_mode = cgan_mode
 
@@ -431,15 +435,12 @@ class CGAN:
             trackers_to_display = display_trackers(
                 start_training, start_epoch, epoch, epoch_gen, epoch_disc,
                 epochs, res_trackers_dict)
-            generate_and_save_images(self.history, self.generator, epoch,
-                                    train_ds, val_ds, trackers_to_display,
-                                    random_sample=self.random_sample)
+            generate_and_save_images(self, epoch, train_ds, val_ds, trackers_to_display)
         
         # Generate one last display by plotting every epochs
-        generate_and_save_images(self.history, self.generator, epoch,
+        generate_and_save_images(self, epoch,
                                  train_ds, val_ds, trackers_to_display,
-                                 epochs_to_display=epochs,
-                                 random_sample=self.random_sample)
+                                 epochs_to_display=epochs)
 
 
 

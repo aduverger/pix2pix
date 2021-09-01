@@ -46,32 +46,36 @@ def display_image(ax, sample_tensor):
     ax.axis('off')
 
 
-def generate_and_save_images(history, model, epoch, train_ds, val_ds,
+def generate_and_save_images(cgan, epoch, train_ds, val_ds,
                              trackers_to_display, epochs_to_display=50,
-                             random_sample=True, display_trackers=True,
-                             display_plots=True):
+                             display_trackers=True, display_plots=True):
     display.clear_output(wait=True)
     #TODO: Use next_iter to avoid iterating upon the whole datasets ?
     train_list = [(paint, real) for paint, real in iter(train_ds)]
     val_list = [(paint, real) for paint, real in iter(val_ds)]
 
-    if random_sample :
+    if cgan.random_sample:
         index_batch_train = random.randint(0, len(train_list) - 1)
         index_batch_val = random.randint(0, len(val_list) - 1)
         index_train = random.randint(0, train_list[index_batch_train][0].shape[0] - 1)
         index_val = random.randint(0, val_list[index_batch_val][0].shape[0] - 1)
-    else:
-        index_batch_train = 0
-        index_batch_val = 0
-        index_train = 0
-        index_val = 0
+        cgan.paint_train = train_list[index_batch_train][0][index_train]
+        cgan.paint_val = val_list[index_batch_val][0][index_val]
+        cgan.real_train = train_list[index_batch_train][1][index_train]
+        cgan.real_val = val_list[index_batch_val][1][index_val]
+        
+    elif cgan.paint_train == None:    
+        cgan.paint_train = train_list[0][0][0]
+        cgan.paint_val = val_list[0][0][0]
+        cgan.real_train = train_list[0][1][0]
+        cgan.real_val = val_list[0][1][0]
 
-    prediction_train = model(expand_dims(
-        train_list[index_batch_train][0][index_train], axis=0),
-                                training=False)
-    prediction_val = model(expand_dims(
-        val_list[index_batch_val][0][index_val], axis=0),
-                            training=False)
+    prediction_train = cgan.generator(expand_dims(
+                            cgan.paint_train, axis=0),
+                                      training=False)
+    prediction_val = cgan.generator(expand_dims(
+                            cgan.paint_val, axis=0),
+                                    training=False)
 
     fig = plt.figure(constrained_layout=True, figsize=(18,10))
 
@@ -86,17 +90,17 @@ def generate_and_save_images(history, model, epoch, train_ds, val_ds,
     ax8 = fig.add_subplot(gs[0:2, 3:])
     ax9 = fig.add_subplot(gs[2:4, 3:])
 
-    display_image(ax1, train_list[index_batch_train][0][index_train])
+    display_image(ax1, cgan.paint_train)
     ax1.set_title(label="Train sample \n Input")
     display_image(ax2, prediction_train[0])
     ax2.set_title(label=f"Output")
-    display_image(ax3, train_list[index_batch_train][1][index_train])
+    display_image(ax3, cgan.real_train)
     ax3.set_title(label="Ground truth")
-    display_image(ax4, val_list[index_batch_val][0][index_val])
+    display_image(ax4, cgan.paint_val)
     ax4.set_title(label="Val sample \n Input")
     display_image(ax5, prediction_val[0])
     ax5.set_title(label="Output")
-    display_image(ax6, val_list[index_batch_val][1][index_val])
+    display_image(ax6, cgan.real_val)
     ax6.set_title(label="Ground truth")
     
     if display_trackers:
@@ -104,8 +108,8 @@ def generate_and_save_images(history, model, epoch, train_ds, val_ds,
         ax7.axis('off')
         
     if display_plots:
-        plot_last_n_epochs(ax8, history, n=epochs_to_display, set_name='train', show_label=False)
-        plot_last_n_epochs(ax9, history, n=epochs_to_display, set_name='val', show_label=True)
+        plot_last_n_epochs(ax8, cgan.history, n=epochs_to_display, set_name='train', show_label=False)
+        plot_last_n_epochs(ax9, cgan.history, n=epochs_to_display, set_name='val', show_label=True)
     
     fig.savefig('image_at_epoch_{:04d}.png'.format(epoch))
     plt.show()
