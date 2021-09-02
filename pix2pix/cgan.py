@@ -25,7 +25,7 @@ class CGAN:
         self.history = self.initialize_history()
         self.l1 = L1Loss()
         self.random_sample = random_sample
-        if not random_sample:
+        if not random_sample: # WORKS ONLY ON GOOGLE COLAB FOR NOW
             self.paint_train, self.real_train = \
                                 load_and_split_image('/content/drive/MyDrive/pix2pix/datasets/resized/train/20.jpg')
             self.paint_val, self.real_val = \
