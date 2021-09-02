@@ -16,7 +16,7 @@ Main class for pix2pix project. Implement a full CGAN model that can be fit.
 """
 
 class CGAN:
-    def __init__(self, generator, discriminator=None, cgan_mode=False):
+    def __init__(self, generator, discriminator=None, cgan_mode=False, random_sample=True):
         self.generator = generator
         self.discriminator = discriminator
         self.gen_optimizer = Adam(1e-4)
@@ -24,11 +24,12 @@ class CGAN:
         self.cross_entropy = CrossLoss(from_logits=True)
         self.history = self.initialize_history()
         self.l1 = L1Loss()
-        self.random_sample = True
-        self.paint_train = None
-        self.paint_val = None
-        self.real_train = None
-        self.real_val = None
+        self.random_sample = random_sample
+        if not random_sample:
+            self.paint_train, self.real_train = \
+                                load_and_split_image('/content/drive/MyDrive/pix2pix/datasets/resized/train/20.jpg')
+            self.paint_val, self.real_val = \
+                                load_and_split_image('/content/drive/MyDrive/pix2pix/datasets/resized/val/21.jpg')
         self.disc_threshold = 0
         self.cgan_mode = cgan_mode
 
@@ -435,10 +436,10 @@ class CGAN:
             trackers_to_display = display_trackers(
                 start_training, start_epoch, epoch, epoch_gen, epoch_disc,
                 epochs, res_trackers_dict)
-            generate_and_save_images(self, epoch, train_ds, val_ds, trackers_to_display)
+            generate_and_save_dashboard(self, epoch, train_ds, val_ds, trackers_to_display)
         
         # Generate one last display by plotting every epochs
-        generate_and_save_images(self, epoch,
+        generate_and_save_dashboard(self, epoch,
                                  train_ds, val_ds, trackers_to_display,
                                  epochs_to_display=epochs)
 
@@ -450,7 +451,7 @@ if __name__ == "__main__":
                                    batch_size=32)
     generator = make_dummy_generator()
     discriminator = make_dummy_discriminator(cgan_mode=True)
-    cgan = CGAN(generator, discriminator, cgan_mode=True)
+    cgan = CGAN(generator, discriminator, cgan_mode=True, random_sample=False)
 
     cgan.fit(train_ds=train,
                val_ds=val,

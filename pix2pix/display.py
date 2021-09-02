@@ -44,9 +44,15 @@ def display_trackers(start_training, start_epoch, epoch, epoch_gen, epoch_disc, 
 def display_image(ax, sample_tensor):
     ax.imshow((sample_tensor * 127.5 + 127.5).numpy().astype('uint8'))
     ax.axis('off')
+    
+
+def save_image(sample_tensor, epoch):
+    plt.imshow((sample_tensor * 127.5 + 127.5).numpy().astype('uint8'))
+    plt.axis('off')
+    plt.savefig('output_at_epoch_{:04d}.png'.format(epoch))
 
 
-def generate_and_save_images(cgan, epoch, train_ds, val_ds,
+def generate_and_save_dashboard(cgan, epoch, train_ds, val_ds,
                              trackers_to_display, epochs_to_display=50,
                              display_trackers=True, display_plots=True):
     display.clear_output(wait=True)
@@ -63,12 +69,6 @@ def generate_and_save_images(cgan, epoch, train_ds, val_ds,
         cgan.paint_val = val_list[index_batch_val][0][index_val]
         cgan.real_train = train_list[index_batch_train][1][index_train]
         cgan.real_val = val_list[index_batch_val][1][index_val]
-        
-    elif cgan.paint_train == None:    
-        cgan.paint_train = train_list[0][0][0]
-        cgan.paint_val = val_list[0][0][0]
-        cgan.real_train = train_list[0][1][0]
-        cgan.real_val = val_list[0][1][0]
 
     prediction_train = cgan.generator(expand_dims(
                             cgan.paint_train, axis=0),
@@ -77,8 +77,9 @@ def generate_and_save_images(cgan, epoch, train_ds, val_ds,
                             cgan.paint_val, axis=0),
                                     training=False)
 
+    save_image(prediction_val[0], epoch)
+    
     fig = plt.figure(constrained_layout=True, figsize=(18,10))
-
     gs = fig.add_gridspec(5, 6)
     ax1 = fig.add_subplot(gs[0:2, 0])
     ax2 = fig.add_subplot(gs[0:2, 1])
@@ -111,7 +112,7 @@ def generate_and_save_images(cgan, epoch, train_ds, val_ds,
         plot_last_n_epochs(ax8, cgan.history, n=epochs_to_display, set_name='train', show_label=False)
         plot_last_n_epochs(ax9, cgan.history, n=epochs_to_display, set_name='val', show_label=True)
     
-    fig.savefig('image_at_epoch_{:04d}.png'.format(epoch))
+    fig.savefig('display_at_epoch_{:04d}.png'.format(epoch))
     plt.show()
 
 
