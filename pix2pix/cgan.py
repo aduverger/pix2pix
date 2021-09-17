@@ -12,11 +12,26 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow import concat
 
 """
-Main class for pix2pix project. Implement a full CGAN model that can be fit.
+Main class for pix2pix project. Implement a full cGAN model.
 """
 
 class CGAN:
     def __init__(self, generator, discriminator=None, cgan_mode=False, random_sample=True):
+        """"
+        Args:
+            generator (tf.keras.Model):
+                    A tensorflow model for the generator.
+                    Usually the GAN generator has a U-Net architecture.
+            discriminator (tf.keras.Model):
+                    A tensorflow model for the discriminator.
+                    Usually the GAN discriminator has a Markovian architecture (PatchGAN) 
+            cgan_mode (bool, optional):
+                    Set to True if you want the discriminator to be condititional
+                    (meaning it takes a concatenation of X and Y as input). Defaults to False.
+            random_sample (bool, optional):
+                    Set to False if you want the same sample from train and val to be displayed
+                    and saved at each epoch. Usefull if you want to make GIF. Defaults to True.
+        """
         self.generator = generator
         self.discriminator = discriminator
         self.gen_optimizer = Adam(1e-4)
@@ -35,11 +50,19 @@ class CGAN:
 
     #TODO add the possibility to add different metrics
     def compile(self, gen_optimizer, disc_optimizer):
+        """Change the optimizers of a cGAN.
+
+        Args:
+            gen_optimizer (tf.keras.optimizers): Generator optimizer
+            disc_optimizer (tf.keras.optimizer): Discriminator optimizer
+        """
         self.gen_optimizer = gen_optimizer
         self.disc_optimizer = disc_optimizer
 
 
     def discriminator_loss(self, real_output, fake_output):
+        """Compute the loss for the discriminator
+        """
         real_loss = self.cross_entropy(ones_like(real_output), real_output)
         fake_loss = self.cross_entropy(zeros_like(fake_output), fake_output)
         total_loss = real_loss + fake_loss
@@ -47,11 +70,15 @@ class CGAN:
 
 
     def update_discriminator_loss(self, loss, real_output, fake_output):
+        """Update the loss for the discriminator
+        """
         loss.update_state(ones_like(real_output), real_output)
         loss.update_state(zeros_like(fake_output), fake_output)
 
 
     def update_discriminator_accuracy(self, acc, real_output, fake_output):
+        """Update the accuracy for the discriminator
+        """
         real_output_array = real_output.numpy()
         real_output_array = np.vectorize(lambda x: 0 if x < self.disc_threshold else 1)(real_output_array)
 
@@ -65,6 +92,8 @@ class CGAN:
 
 
     def generator_loss(self, fake_images=None, real_images=None, fake_output=None, l1_lambda=100, loss_strategy='both'):
+        """Compute the loss for the generator
+        """
         #TODO with try/except
         assert loss_strategy in ['GAN', 'L1', 'both'], "Error: invalid type of loss. Should be 'GAN', 'L1' or 'both'"
         if loss_strategy == "GAN":
@@ -80,10 +109,14 @@ class CGAN:
 
 
     def update_generator_mae(self, mae, fake_images, real_images):
+        """Update the MAE metric for the generator
+        """
         mae.update_state(real_images, fake_images)
 
 
     def update_generator_cross(self, cross, fake_output):
+        """Update the binary crossentropy metric for the generator
+        """
         cross.update_state(ones_like(fake_output), fake_output)
 
 
@@ -259,6 +292,8 @@ class CGAN:
 
 
     def update_history(self, start_training, start_epoch, epoch, res_trackers_dict):
+        """ Update history at each epoch
+        """
         self.history.get('epoch_index', []).append(epoch+1)
         self.history.get('time_epoch', []).append(time.time()-start_epoch)
         self.history.get('time_cumulative', []).append(time.time()-start_training)
