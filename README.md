@@ -1,4 +1,4 @@
-# pix2pix
+# ele.gan.t facades
 
 Image-to-image translation using conditional generative adversarial networks (cGAN).
 
