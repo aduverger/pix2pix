@@ -1,6 +1,6 @@
 # ele.gan.t facades
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/aduverger/pix2pix/blob/master/notebooks/elegant_facades.ipynb)
+Try our notebook &nbsp; [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/aduverger/pix2pix/blob/master/notebooks/elegant_facades.ipynb)
 
 Image-to-image translation using conditional generative adversarial networks (cGAN).
 
