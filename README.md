@@ -14,5 +14,3 @@ Generated image from the cGan model
   </p>
 
 A website is available to try the fitted model, by uploading sketches or draw ones yourself : [yeswegan.herokuapp.com](https://yeswegan.herokuapp.com/)
-
-You can also try the library with the Google Colab provided.
