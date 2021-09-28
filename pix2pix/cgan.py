@@ -1,15 +1,18 @@
+from pix2pix.data import *
+from pix2pix.models import *
+from pix2pix.display import *
+
+import time
+import numpy as np
+
 from tensorflow.keras.losses import BinaryCrossentropy as CrossLoss
 from tensorflow.keras.losses import MeanAbsoluteError as L1Loss
 from tensorflow import ones_like, zeros_like, GradientTape
 from tensorflow.keras.metrics import BinaryCrossentropy, MeanAbsoluteError, Accuracy
-import time
-import numpy as np
 from tensorflow.python.ops.gen_math_ops import Mean
-from pix2pix.data import *
-from pix2pix.models import *
-from pix2pix.display import *
 from tensorflow.keras.optimizers import Adam
 from tensorflow import concat
+
 
 """
 Main class for pix2pix project. Implement a full cGAN model.
@@ -483,10 +486,10 @@ class CGAN:
 if __name__ == "__main__":
     train, val, test = get_dataset(host='local',
                                    dataset='facades',
-                                   batch_size=32)
+                                   batch_size=128)
     generator = make_dummy_generator()
     discriminator = make_dummy_discriminator(cgan_mode=True)
-    cgan = CGAN(generator, discriminator, cgan_mode=True, random_sample=False)
+    cgan = CGAN(generator, discriminator, cgan_mode=True)
 
     cgan.fit(train_ds=train,
                val_ds=val,
