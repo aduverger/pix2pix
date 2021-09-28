@@ -164,18 +164,32 @@ def load_and_split_image(image_path):
     return paint_image, real_image
 
 
-def get_dataset(host='drive', dataset='facades', batch_size=16):
+def get_dataset(host='drive', dataset='facades', batch_size=1):
+    """Return three preprocessed tensors of datas (train, val, test), given a certain dataset name (e.g. 'facades').
+
+        Args:
+            host (str): Where the dataset is host, i.e. 'drive' or 'local'.
+                        Can also be the direct file path to the dataset.
+                        Defaults to 'drive'.
+            dataset (str): Dataset to load. Defaults to 'facades'.
+            batch_size (int): Size of the batches. Defaults to 1.
+
+        Returns:
+            data_train, data_val, data_test (tf.Tensor, dtype='float32'): The three datasets (train, val, test) as tensors with 'float32' type
+    """
 
     if host == 'drive':
         directory = '/content/drive/MyDrive/pix2pix/datasets'
         if dataset == 'facades':
             directory += '/resized'
-    else:  #if host == 'local'
+    elif host == 'local':
         directory = os.path.join(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             'datasets')
         if dataset == 'facades':
             directory += '/facades'
+    else:
+        directory = host
 
     train_dataset = data.Dataset.list_files(directory + "/train/*.jpg")
     train_dataset = train_dataset.map(load_and_split_image,
