@@ -35,7 +35,7 @@ def display_trackers(start_training, start_epoch, epoch, epoch_gen, epoch_disc, 
         Train set : Generator GAN loss = {res_trackers_dict['loss_tracker_train_gen']:0.2f}        Generator MAE = {res_trackers_dict['metric_tracker_train_gen']:0.2f}
                          Discriminator loss = {res_trackers_dict['loss_tracker_train_disc']:0.2f}          Discriminator accuracy = {res_trackers_dict['metric_tracker_train_disc']:0.2f}
 
-        Val set :   Generator GAN loss = {res_trackers_dict['loss_tracker_val_gen']:0.2f}        Generator MAE = {res_trackers_dict['metric_tracker_val_gen']:0.2f}
+        Val set :    Generator GAN loss = {res_trackers_dict['loss_tracker_val_gen']:0.2f}        Generator MAE = {res_trackers_dict['metric_tracker_val_gen']:0.2f}
                          Discriminator loss = {res_trackers_dict['loss_tracker_val_disc']:0.2f}          Discriminator accuracy = {res_trackers_dict['metric_tracker_val_disc']:0.2f}
         '''
     return display_str
