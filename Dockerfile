@@ -1,7 +1,7 @@
 FROM python:3.8.6-buster
 
-COPY api /api
 COPY pix2pix /pix2pix
+COPY api /api
 COPY generator.h5 /generator.h5
 COPY requirements.txt /requirements.txt
 
