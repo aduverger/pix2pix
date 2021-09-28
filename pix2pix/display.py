@@ -19,11 +19,9 @@ def display_trackers(start_training, start_epoch, epoch, epoch_gen, epoch_disc, 
     display_str += f'''
         Epoch {epoch+1:3}/{epochs:3}
         Elapsed time
-                    - since training      {str(datetime.timedelta(seconds=round(time.time()-start_training, 0)))}
+                    - since training           {str(datetime.timedelta(seconds=round(time.time()-start_training, 0)))}
                     - since last epoch    {str(datetime.timedelta(seconds=round(time.time()-start_epoch, 0)))}
         '''
-    #                    - since training      {round(time.time()-start_training, 2):8}s
-    #                    - since last epoch    {round(time.time()-start_epoch, 2):8}s
     # If generator is training alone, its loss = mae
     if epoch < epoch_gen:
         display_str += f'''
@@ -51,7 +49,7 @@ def display_image(ax, sample_tensor):
 def save_image(sample_tensor, epoch):
     plt.imshow((sample_tensor * 127.5 + 127.5).numpy().astype('uint8'))
     plt.axis('off')
-    plt.savefig('output_at_epoch_{:04d}.png'.format(epoch))
+    plt.savefig('output/output_at_epoch_{:04d}.png'.format(epoch))
 
 
 def generate_and_save_dashboard(cgan, epoch, train_ds, val_ds,
@@ -114,7 +112,7 @@ def generate_and_save_dashboard(cgan, epoch, train_ds, val_ds,
         plot_last_n_epochs(ax8, cgan.history, n=epochs_to_display, set_name='train', show_label=False)
         plot_last_n_epochs(ax9, cgan.history, n=epochs_to_display, set_name='val', show_label=True)
     
-    fig.savefig('display_at_epoch_{:04d}.png'.format(epoch))
+    fig.savefig('dashboard/display_at_epoch_{:04d}.png'.format(epoch))
     plt.show()
 
 
