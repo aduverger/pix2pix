@@ -10,7 +10,9 @@ def load_data(host='drive', dataset='facades'):
     """Return three tensors of datas (train, val, test), given a certain dataset name (e.g. 'facades).
 
     Args:
-        host (str): Where the dataset is host, i.e. 'drive' or 'local'. Defaults to 'drive'.
+        host (str): Where the dataset is host, i.e. 'drive' or 'local'.
+                    Can also be the direct file path to the dataset.
+                    Defaults to 'drive'.
         dataset (str): Dataset to load. Defaults to 'facades'.
 
     Returns:
@@ -21,10 +23,12 @@ def load_data(host='drive', dataset='facades'):
         directory = '/content/drive/MyDrive/pix2pix/datasets'
         if dataset == 'facades':
             directory += '/resized'
-    else: #if host == 'local'
+    elif host == 'local':
         directory = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'datasets')
         if dataset == 'facades':
             directory += '/facades'
+    else:
+        directory = host
     #TODO create directories for other datasets and check validity of host and dataset
 
     data_train = []
