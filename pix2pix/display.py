@@ -19,7 +19,7 @@ def display_trackers(start_training, start_epoch, epoch, epoch_gen, epoch_disc, 
     display_str += f'''
         Epoch {epoch+1:3}/{epochs:3}
         Elapsed time
-                    - since training           {str(datetime.timedelta(seconds=round(time.time()-start_training, 0)))}
+                    - since training        {str(datetime.timedelta(seconds=round(time.time()-start_training, 0)))}
                     - since last epoch    {str(datetime.timedelta(seconds=round(time.time()-start_epoch, 0)))}
         '''
     # If generator is training alone, its loss = mae
