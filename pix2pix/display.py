@@ -1,10 +1,9 @@
-import numpy as np
-import seaborn as sns
 import random
 import time
 import datetime
+import numpy as np
+import seaborn as sns
 import matplotlib.pyplot as plt
-from numpy.lib.npyio import save
 from IPython import display
 from tensorflow import expand_dims
 
@@ -20,8 +19,8 @@ def display_trackers(start_training, start_epoch, epoch, epoch_gen, epoch_disc, 
     display_str += f'''
         Epoch {epoch+1:3}/{epochs:3}
         Elapsed time
-                    - since training      {str(datetime.timedelta(seconds=time.time()-start_training))}
-                    - since last epoch    {str(datetime.timedelta(seconds=time.time()-start_epoch))}
+                    - since training      {str(datetime.timedelta(seconds=round(time.time()-start_training, 0)))}
+                    - since last epoch    {str(datetime.timedelta(seconds=round(time.time()-start_epoch,0)))}
         '''
     #                    - since training      {round(time.time()-start_training, 2):8}s
     #                    - since last epoch    {round(time.time()-start_epoch, 2):8}s

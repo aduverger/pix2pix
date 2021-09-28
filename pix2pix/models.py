@@ -1,4 +1,4 @@
-from tensorflow.keras import layers, Sequential, Model, Input
+from tensorflow.keras import layers, Sequential, Model
 
 
 def make_generator_encoder_model(latent_dim):
