@@ -1,5 +1,7 @@
 # ele.gan.t facades
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/duverger/pix2pix/blob/master/notebooks/elegant_facades.ipynb)
+
 Image-to-image translation using conditional generative adversarial networks (cGAN).
 
 The objective was to reproduce the [original research paper](https://arxiv.org/abs/1611.07004) from Isola et al. to generate realistic building facades from sketches.
