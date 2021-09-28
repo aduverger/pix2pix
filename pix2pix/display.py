@@ -44,7 +44,7 @@ def display_trackers(start_training, start_epoch, epoch, epoch_gen, epoch_disc, 
 def display_image(ax, sample_tensor):
     ax.imshow((sample_tensor * 127.5 + 127.5).numpy().astype('uint8'))
     ax.axis('off')
-    
+
 
 def save_image(sample_tensor, epoch):
     plt.imshow((sample_tensor * 127.5 + 127.5).numpy().astype('uint8'))
@@ -77,7 +77,7 @@ def generate_and_save_dashboard(cgan, epoch, train_ds, val_ds,
                             cgan.paint_val, axis=0),
                                     training=False)
 
-    save_image(prediction_val[0], epoch)
+    #save_image(prediction_val[0], epoch)
     
     fig = plt.figure(constrained_layout=True, figsize=(18,10))
     gs = fig.add_gridspec(5, 6)
