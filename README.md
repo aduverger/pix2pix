@@ -14,8 +14,3 @@ Generated image from the cGan model
   </p>
 
 A website is available to try the fitted model, by uploading sketches or draw ones yourself : [yeswegan.herokuapp.com](https://yeswegan.herokuapp.com/)
-
-
-### Put the API in prod
-
-You need to download a `gen_pix2pix_400_model_save.h5` model at the root of the project
