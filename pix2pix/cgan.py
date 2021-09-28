@@ -34,8 +34,8 @@ class CGAN:
         """
         self.generator = generator
         self.discriminator = discriminator
-        self.gen_optimizer = Adam(1e-4)
-        self.disc_optimizer = Adam(1e-4)
+        self.gen_optimizer = Adam(learning_rate=0.0002, beta_1=0.5)
+        self.disc_optimizer = Adam(learning_rate=0.0001, beta_1=0.5)
         self.cross_entropy = CrossLoss(from_logits=True)
         self.history = self.initialize_history()
         self.l1 = L1Loss()
