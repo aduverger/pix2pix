@@ -41,6 +41,14 @@ count_lines:
         '{printf "%4s %s\n", $$1, $$2}{s+=$$0}END{print s}'
 	@echo ''
 
+
+# ----------------------------------
+#          INSTALL & TEST
+# ----------------------------------
+train_model:
+	@python pix2pix/cgan.py
+
+
 # ----------------------------------
 #      UPLOAD PACKAGE TO PYPI
 # ----------------------------------
@@ -54,10 +62,10 @@ pypi_test:
 pypi:
 	@twine upload dist/* -u $(PYPI_USERNAME)
 
+
 # ----------------------------------
 #      API
 # ----------------------------------
-
 GCP_PROJECT_ID=primeval-proton-318910
 DOCKER_IMAGE_NAME=pix2pix
 GCR_MULTI_REGION=eu.gcr.io

@@ -112,7 +112,7 @@ def generate_and_save_dashboard(cgan, epoch, train_ds, val_ds,
         plot_last_n_epochs(ax8, cgan.history, n=epochs_to_display, set_name='train', show_label=False)
         plot_last_n_epochs(ax9, cgan.history, n=epochs_to_display, set_name='val', show_label=True)
     
-    fig.savefig('display_at_epoch_{:04d}.png'.format(epoch))
+    #fig.savefig('display_at_epoch_{:04d}.png'.format(epoch))
     plt.show()
 
 

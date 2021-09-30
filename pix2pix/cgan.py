@@ -19,7 +19,7 @@ Main class for pix2pix project. Implement a full cGAN model.
 """
 
 class CGAN:
-    def __init__(self, generator, discriminator=None, cgan_mode=False, random_sample=True):
+    def __init__(self, generator, discriminator=None, cgan_mode=True, random_sample=True):
         """"
         Args:
             generator (tf.keras.Model):
@@ -486,10 +486,10 @@ class CGAN:
 if __name__ == "__main__":
     train, val, test = get_dataset(host='local',
                                    dataset='facades',
-                                   batch_size=128)
+                                   batch_size=1)
     generator = make_dummy_generator()
-    discriminator = make_dummy_discriminator(cgan_mode=True)
-    cgan = CGAN(generator, discriminator, cgan_mode=True)
+    discriminator = make_dummy_discriminator()
+    cgan = CGAN(generator, discriminator, cgan_mode=False)
 
     cgan.fit(train_ds=train,
                val_ds=val,
