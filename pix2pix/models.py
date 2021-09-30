@@ -30,7 +30,7 @@ def block_conv2D_transpose(filters, kernel_size=4, strides=(2,2), with_dropout=F
     return block
 
 
-def make_generator_encoder_model(strides=(2,2)):
+def make_generator_encoder_model():
     inputs = layers.Input(shape=(256, 256, 3))
     # Entry block
     x = block_conv2D(64, with_batch_norm=False)(inputs)
