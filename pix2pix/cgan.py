@@ -320,7 +320,9 @@ class CGAN:
             epoch_gen=0,
             epoch_disc=0,
             k=1,
-            l1_lambda=100):
+            l1_lambda=100,
+            show_dashboard=True,
+            save_dashboard=False):
         """ Trains the model for a fixed number of epochs (iterations on a dataset).
 
         Args:
@@ -354,6 +356,12 @@ class CGAN:
                     the generator for one epoch. Defaults to 1.
             l1_lambda (int, optional):
                     Weight on L1 term in objective. Defaults to 100.
+            show_dashboard (bool, optional):
+                    Choose to display or not the dashboard at each epoch.
+                    Defaults to True.
+            save_dashboard (bool, optional):
+                    Choose to save or not as a .png file the dashboard at each epoch.
+                    Defaults to True.
         """
 
         # ==== INITIALIZING ====
@@ -474,7 +482,8 @@ class CGAN:
             trackers_to_display = display_trackers(
                 start_training, start_epoch, epoch, epoch_gen, epoch_disc,
                 epochs, res_trackers_dict)
-            generate_and_save_dashboard(self, epoch, train_ds, val_ds, trackers_to_display)
+            if show_dashboard:
+                generate_and_save_dashboard(self, epoch, train_ds, val_ds, trackers_to_display, save_dashboard=save_dashboard)
         
         # Generate one last display by plotting every epochs
         generate_and_save_dashboard(self, epoch,

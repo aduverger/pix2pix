@@ -54,7 +54,8 @@ def save_image(sample_tensor, epoch):
 
 def generate_and_save_dashboard(cgan, epoch, train_ds, val_ds,
                              trackers_to_display, epochs_to_display=50,
-                             display_trackers=True, display_plots=True):
+                             display_trackers=True, display_plots=True,
+                             save_dashboard=False):
     display.clear_output(wait=True)
     #TODO: Use next_iter to avoid iterating upon the whole datasets ?
     train_list = [(paint, real) for paint, real in iter(train_ds)]
@@ -107,12 +108,11 @@ def generate_and_save_dashboard(cgan, epoch, train_ds, val_ds,
     if display_trackers:
         ax7.text(0, 1, trackers_to_display, ha='left', size='medium')
         ax7.axis('off')
-        
     if display_plots:
         plot_last_n_epochs(ax8, cgan.history, n=epochs_to_display, set_name='train', show_label=False)
         plot_last_n_epochs(ax9, cgan.history, n=epochs_to_display, set_name='val', show_label=True)
-    
-    #fig.savefig('display_at_epoch_{:04d}.png'.format(epoch))
+    if save_dashboard:
+        fig.savefig('display_at_epoch_{:04d}.png'.format(epoch))
     plt.show()
 
 
