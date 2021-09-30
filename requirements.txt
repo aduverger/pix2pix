@@ -1,9 +1,17 @@
+#utils
+random
+time
+datetime
+pickle
+glob
+
 # data science
 numpy<1.20
 pandas<1.4
 scikit-learn<0.25
 tensorflow
 seaborn==0.11.2
+matplotlib==3.2.2
 imageio
 
 # api
