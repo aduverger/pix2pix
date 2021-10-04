@@ -25,7 +25,7 @@ if __name__ == "__main__":
     description = 'Hyperparameters for the training'
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('--model_name',
-                        default='model_name',
+                        required=True,
                         help='Name of your model')
     parser.add_argument('--init',
                         type=int,

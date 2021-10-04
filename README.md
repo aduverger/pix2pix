@@ -14,3 +14,58 @@ Generated image from the cGan model
   </p>
 
 A website is available to try the fitted model, by uploading sketches or draw ones yourself : [yeswegan.herokuapp.com](https://yeswegan.herokuapp.com/)
+
+
+# Setup
+
+## Install the package
+
+Go to `https://github.com/aduverger/pix2pix` to see the project, manage issues,
+
+Create a python3 virtualenv and activate it:
+
+```bash
+sudo apt-get install virtualenv python-pip python-dev
+deactivate; virtualenv -ppython3 ~/venv ; source ~/venv/bin/activate
+```
+
+The easiest way to use this library is through the Colab Notebook provided on top of this page.
+However, if you prefer to run this library outside a notebook, please follow the steps below.
+
+Clone the project and install it:
+
+```bash
+git clone git@github.com:aduverger/pix2pix.git
+cd pix2pix
+pip install -r requirements.txt
+make clean install test                # install and test
+```
+
+## Download the data
+
+You can download the facades dataset from Berkeley website:
+
+```bash
+cd datasets
+curl -O  http://efrosgans.eecs.berkeley.edu/pix2pix/datasets/facades.tar.gz
+tar -xzf facades.tar.gz && rm facades.tar.gz
+cd ..
+```
+
+## Train a model:
+
+```bash
+pix2pix-train --model_name my_model
+```
+
+Alternatively, you have access to some hyperparameters to train a model.
+Please refer to the documentation of the .fit() method for details about these parameters.
+
+```bash
+pix2pix-train --model_name my_model --init 0 --epochs 200 --epochs_gen 5 --epochs_disc 0 --k 1 --l1_lambda 100
+```
+
+## Generate a facade
+
+```bash
+pix2pix-predict --model_name my_model --test_index 0
