@@ -68,4 +68,16 @@ pix2pix-train --model_name my_model --init 0 --epochs 200 --epochs_gen 5 --epoch
 ## Generate a facade
 
 ```bash
-pix2pix-predict --model_name my_model --test_index 0
+pix2pix-predict --model_name my_model
+```
+
+Alternatively, you can choose the sketch image you want your model to generate a facade from.
+You can choose an index from the test sample, or a file path.
+
+```bash
+pix2pix-predict --model_name my_model --test_index 89
+```
+or
+``bash
+pix2pix-predict --model_name my_model --file_path /~/Downloads/some_sketch.jpg
+

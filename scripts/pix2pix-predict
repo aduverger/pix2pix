@@ -1,0 +1,78 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from pix2pix.data import *
+from pix2pix.models import *
+from pix2pix.display import *
+from pix2pix.cgan import *
+
+from tensorflow.keras.models import load_model
+
+from tensorflow import io, image, cast, float32
+from tensorflow import expand_dims
+
+import matplotlib.pyplot as plt
+import argparse
+import os
+import logging
+
+
+if __name__ == "__main__":
+    # Disable TensorFlow warning displays
+    logging.disable(logging.WARNING)
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+    # Get the parameters from the user if provided
+    description = 'Please provide a model name and a file path or index for the sketch image to use.'
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument('--model_name',
+                        type=str,
+                        required=True,
+                        help='Name of your model. Must be saved under pix2pix/saved_models/MODEL_NAME/generator.h5')
+    parser.add_argument('--test_index',
+                        type=int,
+                        default=89,
+                        help='Index of the test sample you want to generate a facade from.')
+    parser.add_argument('--file_path',
+                        type=str,
+                        default=None,
+                        help='Path of the sketch file you want to generate a facade from.')
+    args = parser.parse_args()
+    
+    model_name = args.model_name
+    test_index = args.test_index
+    file_path = args.file_path
+    
+    # Load the model
+    directory = \
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),'saved_models')
+    model = load_model(os.path.join(directory, model_name, 'generator.h5'))
+    
+    # Load the sketch image
+    
+    ## If no file path is provided, then import the image from the /test folder with the index provided
+    if file_path == None:
+        file_path = \
+            os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),\
+                'datasets', 'facades', 'test', f'{test_index}.jpg')
+        sketch, _ = load_and_split_image(file_path)
+    
+    ## If a file path is provided, import the image from this path instead
+    else:
+        sketch = io.read_file(file_path)
+        sketch = image.decode_jpeg(sketch)
+        sketch = image.resize(sketch, [256, 256], method=image.ResizeMethod.NEAREST_NEIGHBOR)
+        sketch = cast(sketch, float32)
+        sketch = (sketch - 127.5) / 127.5
+    
+    # Generate a facade
+    sketch = expand_dims(sketch, axis=0)
+    facade = model(sketch, training=False)
+    
+    # Show the generated facade
+    fig, axs = plt.subplots(1, 2, figsize=(10,5))
+    axs[0].imshow((sketch[0] * 127.5 + 127.5).numpy().astype('uint8'))
+    axs[0].axis('off')
+    axs[1].imshow((facade[0] * 127.5 + 127.5).numpy().astype('uint8'))
+    axs[1].axis('off')
+    plt.show()

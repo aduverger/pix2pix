@@ -14,5 +14,5 @@ setup(name='pix2pix',
       test_suite='tests',
       # include_package_data: to install data from MANIFEST.in
       include_package_data=True,
-      scripts=['scripts/pix2pix-run', 'scripts/pix2pix-train'],
+      scripts=['scripts/pix2pix-train', 'scripts/pix2pix-predict'],
       zip_safe=False)
