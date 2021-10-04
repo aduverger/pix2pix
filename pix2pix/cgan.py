@@ -488,7 +488,8 @@ class CGAN:
         # Generate one last display by plotting every epochs
         generate_and_save_dashboard(self, epoch,
                                  train_ds, val_ds, trackers_to_display,
-                                 epochs_to_display=epochs)
+                                 epochs_to_display=epochs,
+                                 save_dashboard=save_dashboard)
 
 
 
