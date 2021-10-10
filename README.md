@@ -20,8 +20,6 @@ A website is available to try the fitted model, by uploading sketches or draw on
 
 ## Install the package
 
-Go to `https://github.com/aduverger/pix2pix` to see the project, manage issues,
-
 Create a python3 virtualenv and activate it:
 
 ```bash
@@ -52,7 +50,7 @@ tar -xzf facades.tar.gz && rm facades.tar.gz
 cd ..
 ```
 
-## Train a model:
+## Train a model
 
 ```bash
 pix2pix-train --model_name my_model

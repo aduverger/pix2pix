@@ -18,6 +18,7 @@ from tensorflow import concat
 Main class for pix2pix project. Implement a full cGAN model.
 """
 
+
 class CGAN:
     def __init__(self, generator, discriminator=None, cgan_mode=True, random_sample=True):
         """"
