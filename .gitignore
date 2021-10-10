@@ -8,4 +8,3 @@ datasets/
 **/__pycache__/
 .env
 .python-version
-*.png
