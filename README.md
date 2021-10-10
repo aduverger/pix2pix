@@ -39,7 +39,7 @@ Clone the project and install it:
 git clone git@github.com:aduverger/pix2pix.git
 cd pix2pix
 pip install -r requirements.txt
-make clean install test                # install and test
+make clean install test         # install and test
 ```
 
 ## Download the data
