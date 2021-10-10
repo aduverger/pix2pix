@@ -20,15 +20,18 @@ A website is available to try the fitted model, by uploading sketches or draw on
 
 ## Install the package
 
+The easiest way to use this library is through the Colab Notebook provided on top of this page.
+However, if you prefer to run this library outside a notebook, please follow the steps below.
+
+
+Go to `https://github.com/aduverger/pix2pix` to see the project.
+
 Create a python3 virtualenv and activate it:
 
 ```bash
 sudo apt-get install virtualenv python-pip python-dev
 deactivate; virtualenv -ppython3 ~/venv ; source ~/venv/bin/activate
 ```
-
-The easiest way to use this library is through the Colab Notebook provided on top of this page.
-However, if you prefer to run this library outside a notebook, please follow the steps below.
 
 Clone the project and install it:
 
@@ -70,12 +73,13 @@ pix2pix-predict --model_name my_model
 ```
 
 Alternatively, you can choose the sketch image you want your model to generate a facade from.
-You can choose an index from the test sample, or a file path.
+You can choose a sketch by specifying an index from the test sample:
 
 ```bash
 pix2pix-predict --model_name my_model --test_index 89
 ```
-or
-``bash
+or you can use a sketch of your own by specifying its file path:
+```bash
 pix2pix-predict --model_name my_model --file_path /~/Downloads/some_sketch.jpg
+```
 
