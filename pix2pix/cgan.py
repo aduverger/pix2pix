@@ -18,6 +18,8 @@ from tensorflow import concat
 Main class for pix2pix project. Implement a full cGAN model.
 """
 
+TRAIN_SAMPLE_PATH = '/content/drive/MyDrive/pix2pix/datasets/resized/train/20.jpg'
+VAL_SAMPLE_PATH = '/content/drive/MyDrive/pix2pix/datasets/resized/val/21.jpg'
 
 class CGAN:
     def __init__(self, generator, discriminator=None, cgan_mode=True, random_sample=True):
@@ -46,9 +48,9 @@ class CGAN:
         self.random_sample = random_sample
         if not random_sample: # WORKS ONLY ON GOOGLE COLAB FOR NOW
             self.paint_train, self.real_train = \
-                                load_and_split_image('/content/drive/MyDrive/pix2pix/datasets/resized/train/20.jpg')
+                                load_and_split_image(TRAIN_SAMPLE_PATH)
             self.paint_val, self.real_val = \
-                                load_and_split_image('/content/drive/MyDrive/pix2pix/datasets/resized/val/21.jpg')
+                                load_and_split_image(VAL_SAMPLE_PATH)
         self.disc_threshold = 0
         self.cgan_mode = cgan_mode
 

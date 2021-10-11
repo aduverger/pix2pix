@@ -58,6 +58,10 @@ if __name__ == "__main__":
                         type=int,
                         default=100,
                         help='Weight on L1 term in objective')
+    parser.add_argument('--show_dashboard',
+                        type=bool,
+                        default=False,
+                        help='Show or not dashboard at each epoch')
     args = parser.parse_args()
     
     init = args.init
@@ -66,12 +70,14 @@ if __name__ == "__main__":
     epoch_disc = args.epochs_disc
     k = args.k
     l1_lambda = args.l1_lambda
+    dashboard = args.show_dashboard
     
     # Train the model
     model.fit(train_ds=ds_train, val_ds=ds_val,
               epochs=init+n_epoch, initial_epoch=init,
               epoch_gen=epoch_gen, epoch_disc=epoch_disc,
-              k=k, l1_lambda=100)
+              k=k, l1_lambda=l1_lambda,
+              show_dashboard=dashboard)
     
     # Save the model
     model_name = args.model_name
