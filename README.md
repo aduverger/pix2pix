@@ -23,9 +23,6 @@ A website is available to try the fitted model, by uploading sketches or draw on
 The easiest way to use this library is through the Colab Notebook provided on top of this page.
 However, if you prefer to run this library outside a notebook, please follow the steps below.
 
-
-Go to `https://github.com/aduverger/pix2pix` to see the project.
-
 Create a python3 virtualenv and activate it:
 
 ```bash
