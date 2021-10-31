@@ -46,20 +46,20 @@ cd ..
 ## Train a model
 
 ```bash
-pix2pix-train --model_name my_model
+pix2pix-train --model_name MY_MODEL
 ```
 
 Alternatively, you have access to some hyperparameters to train a model.
 Please refer to the documentation of the .fit() method for details about these parameters.
 
 ```bash
-pix2pix-train --model_name my_model --init 0 --epochs 200 --epochs_gen 5 --epochs_disc 0 --k 1 --l1_lambda 100
+pix2pix-train --model_name MY_MODEL --init 0 --epochs 200 --epochs_gen 5 --epochs_disc 0 --k 1 --l1_lambda 100
 ```
 
 ## Generate a facade
 
 ```bash
-pix2pix-predict --model_name my_model
+pix2pix-predict --model_name MY_MODEL
 ```
 
 Alternatively, you can choose the sketch image you want your model to generate a facade from.
@@ -67,10 +67,10 @@ Alternatively, you can choose the sketch image you want your model to generate a
 You can choose a sketch by specifying an index from the test sample:
 
 ```bash
-pix2pix-predict --model_name my_model --test_index 89
+pix2pix-predict --model_name MY_MODEL --test_index 89
 ```
 Or you can use a sketch of your own by specifying its file path:
 ```bash
-pix2pix-predict --model_name my_model --file_path /~/Downloads/some_sketch.jpg
+pix2pix-predict --model_name MY_MODEL --file_path /~/Downloads/some_sketch.jpg
 ```
 
